@@ -8,7 +8,6 @@ import { ClearanceCompaniesModal } from '../components/ClearanceCompaniesModal';
 import { AskModal } from '../components/AskModal';
 import { useState } from 'react';
 import { MessageCircle } from 'lucide-react';
-import './ImportExportDashboard.css';
 import { Link } from 'react-router-dom';
 
 
@@ -40,7 +39,7 @@ export interface CompanyData {
 
 type ModalType = 'drilldown' | 'tariff' | 'ports' | 'companies' | 'ask' | null;
 
-export default function App() {
+export default function ImportExportDashboard() {
   const [currentQuery, setCurrentQuery] = useState<QueryData>({
     sector: 'جميع القطاعات',
     metric: 'عدد الوحدات',
