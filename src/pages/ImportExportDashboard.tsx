@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { QueryBuilder } from '../components/QueryBuilder';
 import { ChartDisplay } from '../components/ChartDisplay';
 import { SuggestedQueries } from '../components/SuggestedQueries';
@@ -6,9 +7,6 @@ import { TariffModal } from '../components/TariffModal';
 import { PortDistributionModal } from '../components/PortDistributionModal';
 import { ClearanceCompaniesModal } from '../components/ClearanceCompaniesModal';
 import { AskModal } from '../components/AskModal';
-import { useState } from 'react';
-import { ArrowUpRight, MessageCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import Header from './Header';
 
 export interface QueryData {
@@ -39,6 +37,21 @@ export interface CompanyData {
 
 type ModalType = 'drilldown' | 'tariff' | 'ports' | 'companies' | 'ask' | null;
 
+// 🧩 دالة مساعدة لتحويل QueryData إلى query string
+const buildQueryString = (query: QueryData) => {
+  const params = new URLSearchParams();
+
+  params.set('sector', query.sector);
+  params.set('metric', query.metric);
+  params.set('location', query.location);
+  params.set('productCategory', query.productCategory);
+  params.set('periodFrom', query.period.from);
+  params.set('periodTo', query.period.to);
+  params.set('port', query.port);
+
+  return params.toString();
+};
+
 export default function ImportExportDashboard() {
   const [currentQuery, setCurrentQuery] = useState<QueryData>({
     sector: 'جميع القطاعات',
@@ -56,23 +69,13 @@ export default function ImportExportDashboard() {
   const [dataCache] = useState<Map<string, ChartDataPoint[]>>(new Map());
   const [userModifiedDates, setUserModifiedDates] = useState(false);
 
-  const [chartData, setChartData] = useState<ChartDataPoint[]>([
-    { name: 'يناير', value: 45000 },
-    { name: 'فبراير', value: 52000 },
-    { name: 'مارس', value: 48000 },
-    { name: 'أبريل', value: 61000 },
-    { name: 'مايو', value: 55000 },
-    { name: 'يونيو', value: 67000 },
-    { name: 'يوليو', value: 58000 },
-    { name: 'أغسطس', value: 72000 },
-    { name: 'سبتمبر', value: 64000 },
-    { name: 'أكتوبر', value: 69000 },
-    { name: 'نوفمبر', value: 71000 },
-  ]);
-
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [showMonthClickHint, setShowMonthClickHint] = useState(false);
+
+  // ✅ جديد: لمعرفة هل فيه بحث أم لا
+  const [hasSearched, setHasSearched] = useState(false);
 
   const getCacheKey = (query: QueryData) => {
     return JSON.stringify({
@@ -85,22 +88,25 @@ export default function ImportExportDashboard() {
     });
   };
 
-  // ✅ الآن تستخدم Fake API مبنية على JSON بدلاً من توليد بيانات عشوائية
+  // 🔄 استدعاء API حسب الـ query + query params
   const handleQuerySubmit = async (query: QueryData) => {
     setCurrentQuery(query);
     setShowMonthClickHint(false);
+    setHasSearched(true); // 👈 من الآن فصاعدًا نعرض النتائج
 
     const cacheKey = getCacheKey(query);
 
-    // 1) لو الداتا موجودة في الكاش استخدمها مباشرة
+    // لو البيانات موجودة في الكاش لنفس الـ query استخدمها
     if (dataCache.has(cacheKey)) {
       setChartData(dataCache.get(cacheKey)!);
       return;
     }
 
     try {
-      // 2) استدعاء Fake API (json-server) التي تقرأ من db.json
-      const response = await fetch('http://localhost:4000/chartData');
+      const qs = buildQueryString(query);
+      const url = `http://localhost:4000/chartData?${qs}`;
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error('Failed to fetch chart data');
@@ -108,13 +114,12 @@ export default function ImportExportDashboard() {
 
       const apiData = (await response.json()) as ChartDataPoint[];
 
-      // حفظ في الكاش لنفس الـ query
       dataCache.set(cacheKey, apiData);
       setChartData(apiData);
     } catch (error) {
-      console.error('Error fetching chart data from fake API:', error);
+      console.error('Error fetching chart data from API:', error);
 
-      // 3) في حال فشل الـ API نرجع نستخدم بيانات مولدة محلياً كـ fallback
+      // 📉 في حال فشل الـ API استخدم fallback (تقدر تشيله لو ما تحتاجه)
       const months = [
         'يناير',
         'فبراير',
@@ -138,7 +143,9 @@ export default function ImportExportDashboard() {
     }
   };
 
-  const handleSuggestedQueryAction = (action: 'monthly' | 'tariff' | 'weight' | 'ports' | 'companies') => {
+  const handleSuggestedQueryAction = (
+    action: 'monthly' | 'tariff' | 'weight' | 'ports' | 'companies'
+  ) => {
     switch (action) {
       case 'monthly':
         setShowMonthClickHint(true);
@@ -147,7 +154,7 @@ export default function ImportExportDashboard() {
       case 'tariff':
         setActiveModal('tariff');
         break;
-      case 'weight':
+      case 'weight': {
         let newMetric = 'عدد الوحدات';
         if (currentQuery.metric === 'عدد الوحدات') {
           newMetric = 'الوزن الإجمالي';
@@ -156,12 +163,13 @@ export default function ImportExportDashboard() {
         } else {
           newMetric = 'عدد الوحدات';
         }
-        const weightQuery = {
+        const weightQuery: QueryData = {
           ...currentQuery,
           metric: newMetric,
         };
         handleQuerySubmit(weightQuery);
         break;
+      }
       case 'ports':
         setActiveModal('ports');
         break;
@@ -194,29 +202,68 @@ export default function ImportExportDashboard() {
         </div>
 
         <div className="space-y-6">
-          <QueryBuilder onSubmit={handleQuerySubmit} initialQuery={currentQuery} />
-          <ChartDisplay
-            data={chartData}
-            query={currentQuery}
-            onMonthClick={handleMonthClick}
-            showMonthClickHint={showMonthClickHint}
+          {/* 🧱 QueryBuilder دائمًا ظاهر عشان المستخدم يقدر يبحث */}
+          <QueryBuilder
+            onSubmit={handleQuerySubmit}
+            initialQuery={currentQuery}
           />
-          <SuggestedQueries onAction={handleSuggestedQueryAction} currentQuery={currentQuery} />
+
+          {/* ⬅️ هنا نخفي كل شيء مرتبط بالنتائج لو ما فيه بحث */}
+          {hasSearched && (
+            <>
+              <ChartDisplay
+                data={chartData}
+                query={currentQuery}
+                onMonthClick={handleMonthClick}
+                showMonthClickHint={showMonthClickHint}
+              />
+
+              <SuggestedQueries
+                onAction={handleSuggestedQueryAction}
+                currentQuery={currentQuery}
+              />
+            </>
+          )}
         </div>
       </div>
 
-      {activeModal === 'drilldown' && selectedMonth && (
-        <DrilldownModal month={selectedMonth} query={currentQuery} onClose={handleCloseModal} />
+      {/* حتى المودالات المرتبطة بالنتائج يفضل ما تفتح إلا بعد بحث، لكن لو حاب نخليها مربوطة بالـ state فقط */}
+      {hasSearched && activeModal === 'drilldown' && selectedMonth && (
+        <DrilldownModal
+          month={selectedMonth}
+          query={currentQuery}
+          onClose={handleCloseModal}
+        />
       )}
 
-      {activeModal === 'tariff' && <TariffModal query={currentQuery} onClose={handleCloseModal} />}
+      {hasSearched && activeModal === 'tariff' && (
+        <TariffModal
+          query={currentQuery}
+          onClose={handleCloseModal}
+        />
+      )}
 
-      {activeModal === 'ports' && <PortDistributionModal query={currentQuery} onClose={handleCloseModal} />}
+      {hasSearched && activeModal === 'ports' && (
+        <PortDistributionModal
+          query={currentQuery}
+          onClose={handleCloseModal}
+        />
+      )}
 
-      {activeModal === 'companies' && <ClearanceCompaniesModal query={currentQuery} onClose={handleCloseModal} />}
+      {hasSearched && activeModal === 'companies' && (
+        <ClearanceCompaniesModal
+          query={currentQuery}
+          onClose={handleCloseModal}
+        />
+      )}
 
+      {/* AskModal ممكن تخليه يشتغل حتى بدون بحث، لذلك ما ربطته بـ hasSearched */}
       {activeModal === 'ask' && (
-        <AskModal currentQuery={currentQuery} onClose={handleCloseModal} onQueryGenerate={handleQuerySubmit} />
+        <AskModal
+          currentQuery={currentQuery}
+          onClose={handleCloseModal}
+          onQueryGenerate={handleQuerySubmit}
+        />
       )}
     </div>
   );
