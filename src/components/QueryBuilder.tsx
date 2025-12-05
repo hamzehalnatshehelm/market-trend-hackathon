@@ -8,26 +8,89 @@ interface QueryBuilderProps {
   initialQuery: QueryData;
 }
 
-interface QueryOptionsResponse {
-  sectors: string[];
-  metrics: string[];
-  directions: string[];
-  ports: Record<string, string[]>; // مثال: { "البحرية": ["ميناء جدة", ...] }
+interface QueryOptions {
+  sectors?: string[];
+  metrics?: string[];
+  directions?: string[];
+  productCategories?: string[];
+  ports?: string[];
+  periods?: {
+    years: number[];
+    months: string[];
+  };
 }
 
-// Fallback values لو الـ API فشل
-const FALLBACK_OPTIONS: QueryOptionsResponse = {
-  sectors: [
+export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
+  const [query, setQuery] = useState<QueryData>(initialQuery);
+  const [sectorSearchQuery, setSectorSearchQuery] = useState('');
+  const [showSectorDropdown, setShowSectorDropdown] = useState(false);
+
+  const [options, setOptions] = useState<QueryOptions | null>(null);
+  const [optionsLoading, setOptionsLoading] = useState(false);
+  const [optionsError, setOptionsError] = useState<string | null>(null);
+
+  // لو initialQuery تغيّر من الأب نحدث الـ state
+  useEffect(() => {
+    setQuery(initialQuery);
+  }, [initialQuery]);
+
+  // 🔹 Fallbacks لو الـ API فشل أو لسه ما رجع
+  const FALLBACK_SECTORS: string[] = [
     'جميع القطاعات',
     'استيراد مواد التنظيف',
     'استيراد المواد الغذائية',
     'استيراد الإلكترونيات',
     'استيراد مواد البناء',
     'استيراد المنسوجات',
-  ],
-  metrics: ['عدد الوحدات', 'الوزن الإجمالي', 'عدد الشحنات'],
-  directions: ['استيراد', 'تصدير'],
-  ports: {
+  ];
+
+  const FALLBACK_METRICS: string[] = [
+    'عدد الوحدات',
+    'الوزن الإجمالي',
+    'عدد الشحنات',
+  ];
+
+  const FALLBACK_DIRECTIONS: string[] = ['استيراد', 'تصدير'];
+
+  // 🔄 تحميل خيارات الاستعلام من الـ API
+  useEffect(() => {
+    const fetchOptions = async () => {
+      setOptionsLoading(true);
+      setOptionsError(null);
+
+      try {
+        const res = await fetch('http://localhost:4000/queryOptions');
+        if (!res.ok) {
+          throw new Error('Failed to load query options');
+        }
+        const payload = (await res.json()) as QueryOptions;
+        setOptions(payload);
+      } catch (error) {
+        console.error('Error loading query options:', error);
+        setOptionsError('تعذر تحميل خيارات الاستعلام، تم استخدام خيارات افتراضية.');
+      } finally {
+        setOptionsLoading(false);
+      }
+    };
+
+    fetchOptions();
+  }, []);
+
+  // 👇 نختار إما بيانات الـ API أو الـ fallback
+  const sectors = options?.sectors && options.sectors.length > 0
+    ? options.sectors
+    : FALLBACK_SECTORS;
+
+  const metrics = options?.metrics && options.metrics.length > 0
+    ? options.metrics
+    : FALLBACK_METRICS;
+
+  const directions = options?.directions && options.directions.length > 0
+    ? options.directions
+    : FALLBACK_DIRECTIONS;
+
+  // نفس تركيب المنافذ القديم (مجمعة)
+  const ports = {
     'جميع المنافذ': [],
     'البحرية': [
       'جميع المنافذ البحرية',
@@ -52,52 +115,7 @@ const FALLBACK_OPTIONS: QueryOptionsResponse = {
       'مطار الملك فهد الدولي - الدمام',
       'مطار الأمير محمد بن عبدالعزيز - المدينة المنورة',
     ],
-  },
-};
-
-export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
-  const [query, setQuery] = useState<QueryData>(initialQuery);
-  const [sectorSearchQuery, setSectorSearchQuery] = useState('');
-  const [showSectorDropdown, setShowSectorDropdown] = useState(false);
-
-  const [options, setOptions] = useState<QueryOptionsResponse | null>(null);
-  const [isLoadingOptions, setIsLoadingOptions] = useState(false);
-  const [optionsError, setOptionsError] = useState<string | null>(null);
-
-  // لو initialQuery تغير من الأب (مثلاً بعد استرجاع محفوظات أو رابط فيه params)
-  useEffect(() => {
-    setQuery(initialQuery);
-  }, [initialQuery]);
-
-  // 🛰️ تحميل القوائم من API مرة واحدة عند تحميل الكومبوننت
-  useEffect(() => {
-    const fetchOptions = async () => {
-      setIsLoadingOptions(true);
-      setOptionsError(null);
-      try {
-        const res = await fetch('http://localhost:4000/queryOptions');
-        if (!res.ok) {
-          throw new Error('Failed to load query options');
-        }
-        const data = (await res.json()) as QueryOptionsResponse;
-        setOptions(data);
-      } catch (err) {
-        console.error('Error loading query options:', err);
-        setOptions(FALLBACK_OPTIONS);
-        setOptionsError('تعذر تحميل خيارات الاستعلام، تم استخدام الإعدادات الافتراضية.');
-      } finally {
-        setIsLoadingOptions(false);
-      }
-    };
-
-    fetchOptions();
-  }, []);
-
-  // استخدم اللي جاي من الـ API أو الـ fallback
-  const sectors = (options ?? FALLBACK_OPTIONS).sectors;
-  const metrics = (options ?? FALLBACK_OPTIONS).metrics;
-  const directions = (options ?? FALLBACK_OPTIONS).directions;
-  const ports = (options ?? FALLBACK_OPTIONS).ports;
+  };
 
   const filteredSectors = sectors.filter((sector) =>
     sector.toLowerCase().includes(sectorSearchQuery.toLowerCase())
@@ -110,22 +128,23 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <h2 className="text-xl font-semibold text-slate-900">بناء الاستعلام</h2>
-        {isLoadingOptions && (
-          <span className="text-xs text-slate-500">جاري تحميل خيارات البحث...</span>
+        {optionsLoading && (
+          <span className="text-xs text-slate-500">
+            جاري تحميل خيارات القطاعات والمقاييس...
+          </span>
         )}
       </div>
-
       {optionsError && (
-        <div className="mb-4 text-sm text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">
+        <p className="text-xs text-amber-600 mb-4">
           {optionsError}
-        </div>
+        </p>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* القطاع */}
+          {/* القطاع + بحث */}
           <div className="relative">
             <label className="block text-slate-700 mb-2">القطاع</label>
             <div className="relative">
@@ -199,7 +218,7 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
             </select>
           </div>
 
-          {/* التعرفة */}
+          {/* التعرفة (TariffTreeSelect كما هو) */}
           <div>
             <label className="block text-slate-700 mb-2">التعرفة</label>
             <TariffTreeSelect
@@ -287,7 +306,7 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
             type="submit"
             className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
           >
-            <Search className="w-5 ه-5" />
+            <Search className="w-5 h-5" />
             <span>تنفيذ الاستعلام</span>
           </button>
         </div>
