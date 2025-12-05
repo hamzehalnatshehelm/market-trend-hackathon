@@ -16,7 +16,7 @@ const LoginPage: React.FC = () => {
   const validate = () => {
     const newErrors: { email?: string } = {};
 
-    if (!email) {
+    if (!email.trim()) {
       newErrors.email = "البريد الإلكتروني مطلوب";
     } else {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -38,17 +38,18 @@ const LoginPage: React.FC = () => {
     try {
       setIsSubmitting(true);
 
-      // غيّر الرابط حسب الـ API عندك
-      const res = await fetch("https://api.example.com/auth/request-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          rememberMe,
-        }),
-      });
+      const res = await fetch(
+        "http://10.44.148.143:6061/user-management/auth/request-otp",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email
+          }),
+        }
+      );
 
       if (!res.ok) {
         try {
@@ -57,15 +58,12 @@ const LoginPage: React.FC = () => {
             throw new Error(errorData.message);
           }
         } catch {
-          // تجاهل خطأ البودي
+          // تجاهل خطأ الـ JSON
         }
         throw new Error("تعذر إرسال رمز التحقق، الرجاء المحاولة لاحقاً.");
       }
 
-      // لو تحتاج تقرأ شيء من الريسبونس:
-      // const data = await res.json();
 
-      // بعد نجاح إرسال الـ OTP نروح لصفحة OTP ومعنا الإيميل
       navigate("/otp", { state: { email } });
     } catch (err: any) {
       setServerError(err.message || "حدث خطأ غير متوقع، الرجاء المحاولة لاحقاً.");
@@ -120,18 +118,6 @@ const LoginPage: React.FC = () => {
             )}
           </div>
 
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="remember"
-                checked={rememberMe}
-                onCheckedChange={(checked) => setRememberMe(!!checked)}
-              />
-              <label htmlFor="remember" className="text-slate-700 cursor-pointer">
-                تذكرني
-              </label>
-            </div>
-          </div>
 
           <button
             type="submit"

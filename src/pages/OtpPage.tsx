@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-interface LocationState {
+interface OtpLocationState {
   state?: {
     email?: string;
   };
@@ -9,10 +9,11 @@ interface LocationState {
 
 const OtpPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation() as LocationState;
+  const location = useLocation() as OtpLocationState;
   const email = location.state?.email || "";
 
-  const [values, setValues] = useState(["", "", "", ""]);
+  // 6 خانات OTP
+  const [values, setValues] = useState<string[]>(["", "", "", "", "", ""]);
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +21,7 @@ const OtpPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // لو ما في إيميل (دخل مباشرة على صفحة OTP) رجّعه للّوجين
+    // لو دخل مباشرة على صفحة OTP بدون إيميل
     if (!email) {
       navigate("/login");
     }
@@ -28,6 +29,7 @@ const OtpPage: React.FC = () => {
 
   const handleChange = (index: number, value: string) => {
     if (!/^[0-9]?$/.test(value)) return;
+
     const next = [...values];
     next[index] = value;
     setValues(next);
@@ -50,6 +52,7 @@ const OtpPage: React.FC = () => {
     setServerError(null);
 
     const otp = values.join("");
+
     if (otp.length !== values.length) {
       setError("الرجاء إدخال رمز التحقق بالكامل.");
       return;
@@ -58,17 +61,19 @@ const OtpPage: React.FC = () => {
     try {
       setIsSubmitting(true);
 
-      // غيّر الرابط حسب الـ API عندك
-      const res = await fetch("https://api.example.com/auth/verify-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          otp,
-        }),
-      });
+      const res = await fetch(
+        "http://10.44.148.143:6061/user-management/auth/verify-otp",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            otp,
+          }),
+        }
+      );
 
       if (!res.ok) {
         try {
@@ -77,20 +82,18 @@ const OtpPage: React.FC = () => {
             throw new Error(errorData.message);
           }
         } catch {
-          // تجاهل خطأ البودي
+          // تجاهل خطأ الـ JSON
         }
         throw new Error("رمز التحقق غير صحيح أو منتهي، الرجاء المحاولة مرة أخرى.");
       }
 
-      const data = await res.json();
-
-      // مثال: حفظ التوكن
-      if (data.token) {
-        localStorage.setItem("authToken", data.token);
-      }
+      // الرد حسب كلامك:
+      // { "email": "honiazy@elm.sa", "otp": 647704 }
+      // تقدر تقراه لو حاب:
+      // const data = await res.json();
 
       alert("تم تأكيد الحساب بنجاح!");
-      navigate("/subscription");
+      navigate("/subscription"); // أو "/" حسب ما تحب
     } catch (err: any) {
       setServerError(err.message || "حدث خطأ غير متوقع، الرجاء المحاولة لاحقاً.");
     } finally {
@@ -99,18 +102,20 @@ const OtpPage: React.FC = () => {
   };
 
   const resendOtp = async () => {
-    setServerError(null);
     setError(null);
+    setServerError(null);
 
     try {
-      // إعادة إرسال OTP
-      const res = await fetch("https://api.example.com/auth/resend-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
+      const res = await fetch(
+        "http://10.44.148.143:6061/user-management/auth/request-otp",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
 
       if (!res.ok) {
         throw new Error("تعذر إعادة إرسال رمز التحقق، الرجاء المحاولة لاحقاً.");
@@ -186,7 +191,7 @@ const OtpPage: React.FC = () => {
                   value={val}
                   onChange={(e) => handleChange(idx, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(idx, e)}
-                  className="w-12 h-12 text-center text-xl font-semibold border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-10 h-12 text-center text-lg font-semibold border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               ))}
@@ -220,4 +225,4 @@ const OtpPage: React.FC = () => {
   );
 };
 
-export default OtpPage; 
+export default OtpPage;
