@@ -29,7 +29,7 @@ const HomePage: React.FC = () => {
                   اتجاهات السوق
                 </p>
                 <p className="text-xs text-slate-500">
-                  نظام إدارة التصدير والاستيراد وتحليل البيانات التجارية
+                  نظام تحليل الشحنات التجارية
                 </p>
               </div>
             </div>
@@ -90,18 +90,18 @@ const HomePage: React.FC = () => {
                   تقارير جاهزة للمشاركة
                 </p>
                 <p className="text-slate-500 text-xs">
-                  تصدير النتائج إلى Excel أو PDF ومشاركتها مع فريقك.
+                  تصدير النتائج إلى Excel ومشاركتها مع فريقك.
                 </p>
               </div>
             </div>
           </div>
 
           {/* يمين: كرت خاص بالاستيراد والتصدير */}
-               <section className="bg-white rounded-xl border border-slate-100 px-4 py-3 shadow-sm">
+          <section className="bg-white rounded-xl border border-slate-100 px-4 py-3 shadow-sm">
             <div className="flex items-center justify-between gap-4 mb-5">
               <div>
                 <h2 className="text-base md:text-lg font-semibold text-slate-900 mb-1">
-                  خلية الاستيراد والتصدير
+                  وسع نظاق بحثك
                 </h2>
                 <p className="text-xs md:text-sm text-slate-500">
                   ركّز على منتج أو مجموعة منتجات محددة، واعرف حجم حركتها عبر
@@ -116,8 +116,8 @@ const HomePage: React.FC = () => {
             <div className="grid gap-4 md:grid-cols-3 text-sm">
               <FeatureItem
                 icon={<Globe2 className="w-4 h-4" />}
-                title="تحليل حسب بلد المنشأ والمنفذ"
-                description="تعرف على أكثر الدول تصديرًا لمنتجاتك، وأي المنافذ تشهد أعلى كثافة في الحركة."
+                title="تحليل الوضع التنافسي"
+                description="تعرف على مكانك في السوق بحسب حجم وارداتك أو صادراتك"
               />
               <FeatureItem
                 icon={<FileText className="w-4 h-4" />}

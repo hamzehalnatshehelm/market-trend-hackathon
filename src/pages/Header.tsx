@@ -1,29 +1,42 @@
-import { Link } from "react-router-dom";
-import { MessageCircle } from "lucide-react";
+import { Link } from 'react-router-dom';
+import { ArrowUpRight, MessageCircle } from 'lucide-react';
 
-export default function Header() {
+interface HeaderProps {
+  onAskClick: () => void;
+}
+
+export default function Header({ onAskClick }: HeaderProps) {
   return (
-    <header className="container mx-auto px-4 py-8 bg-white border-b shadow-sm py-3 px-6 flex items-center justify-between fixed top-0 left-0 z-50">
-      
-      {/* Logo */}
-      <div className="flex items-center gap-2">
-        <img src="/logo.png" alt="logo" className="h-10 w-auto" />
-        <h1 className="text-xl font-semibold text-gray-700">Market Trends</h1>
-      </div>
+    <header className="mb-8">
+      <div className="flex items-center justify-between mb-4 bg-white rounded-2xl shadow-lg p-6">
+        <div className="flex items-center gap-4">
+          <div className="flex justify-center">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow-md">
+              <ArrowUpRight className="w-9 h-9" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold mb-2 text-indigo-600">اتجاهات السوق</h1>
+            <p className="text-sm text-slate-600">نظام إدارة الشحن والتصدير</p>
+          </div>
+        </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-4">
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
-          تسجيل الدخول
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onAskClick}
+            className="flex items-center gap-2 px-6 py-3 cursor-pointer rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all hover:shadow-xl border border-slate-300 bg-white"
+          >
+            <MessageCircle className="w-5 h-5" />
+            <span>إسالني</span>
+          </button>
 
-        <Link
-          to="#"
-          className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-md"
-        >
-          <MessageCircle className="w-4 h-4" />
-          <span>ASK</span>
-        </Link>
+          <Link
+            to="/login"
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
+          >
+            <span className="btn-text">تسجيل الدخول</span>
+          </Link>
+        </div>
       </div>
     </header>
   );

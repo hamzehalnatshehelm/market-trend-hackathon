@@ -53,7 +53,7 @@ const SubscriptionPage: React.FC = () => {
               </div>
             </div>
             <ul className="space-y-3 mb-6 text-sm text-slate-700 flex-1">
-              <li>حتى ١٠٠ شحنة شهرياً</li>
+              <li>حتى ١٠٠ استعلام شهرياً</li>
               <li>تقارير أساسية</li>
               <li>دعم فني عبر البريد</li>
             </ul>
@@ -80,10 +80,9 @@ const SubscriptionPage: React.FC = () => {
               </div>
             </div>
             <ul className="space-y-3 mb-6 text-sm text-slate-700 flex-1">
-              <li>حتى ٥٠٠ شحنة شهرياً</li>
-              <li>تقارير تحليلية متقدمة</li>
+              <li>حتى ٥٠٠ استعلام شهرياً</li>
+              <li>تقارير شاملة متقدمة</li>
               <li>دعم فني ٢٤/٧</li>
-              <li>API للتكامل</li>
             </ul>
             <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl w-full justify-center"
               onClick={() => handleSubscribe("professional")}>
@@ -103,7 +102,7 @@ const SubscriptionPage: React.FC = () => {
               </div>
             </div>
             <ul className="space-y-3 mb-6 text-sm text-slate-700 flex-1">
-              <li>شحنات غير محدودة</li>
+              <li>حتى ١٠٠٠ استعلام شهرياً</li>
               <li>جميع التقارير والتحليلات</li>
               <li>دعم مخصص</li>
             </ul>

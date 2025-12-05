@@ -9,7 +9,7 @@ import { AskModal } from '../components/AskModal';
 import { useState } from 'react';
 import { ArrowUpRight, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
+import Header from './Header';
 
 export interface QueryData {
   sector: string;
@@ -47,9 +47,9 @@ export default function ImportExportDashboard() {
     productCategory: 'اختر التعرفة',
     period: {
       from: '2024-12-01',
-      to: '2025-12-01'
+      to: '2025-12-01',
     },
-    port: 'جميع المنافذ'
+    port: 'جميع المنافذ',
   });
 
   // Store data per query configuration to maintain consistency
@@ -81,25 +81,57 @@ export default function ImportExportDashboard() {
       location: query.location,
       productCategory: query.productCategory,
       period: query.period,
-      port: query.port
+      port: query.port,
     });
   };
 
-  const handleQuerySubmit = (query: QueryData) => {
+  // ✅ الآن تستخدم Fake API مبنية على JSON بدلاً من توليد بيانات عشوائية
+  const handleQuerySubmit = async (query: QueryData) => {
     setCurrentQuery(query);
     setShowMonthClickHint(false);
 
     const cacheKey = getCacheKey(query);
 
-    // Check if we have cached data for this query
+    // 1) لو الداتا موجودة في الكاش استخدمها مباشرة
     if (dataCache.has(cacheKey)) {
       setChartData(dataCache.get(cacheKey)!);
-    } else {
-      // Generate mock data based on query
-      const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-      const newData = months.map(month => ({
+      return;
+    }
+
+    try {
+      // 2) استدعاء Fake API (json-server) التي تقرأ من db.json
+      const response = await fetch('http://localhost:4000/chartData');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch chart data');
+      }
+
+      const apiData = (await response.json()) as ChartDataPoint[];
+
+      // حفظ في الكاش لنفس الـ query
+      dataCache.set(cacheKey, apiData);
+      setChartData(apiData);
+    } catch (error) {
+      console.error('Error fetching chart data from fake API:', error);
+
+      // 3) في حال فشل الـ API نرجع نستخدم بيانات مولدة محلياً كـ fallback
+      const months = [
+        'يناير',
+        'فبراير',
+        'مارس',
+        'أبريل',
+        'مايو',
+        'يونيو',
+        'يوليو',
+        'أغسطس',
+        'سبتمبر',
+        'أكتوبر',
+        'نوفمبر',
+        'ديسمبر',
+      ];
+      const newData = months.map((month) => ({
         name: month,
-        value: Math.floor(Math.random() * 50000) + 30000
+        value: Math.floor(Math.random() * 50000) + 30000,
       }));
       dataCache.set(cacheKey, newData);
       setChartData(newData);
@@ -126,7 +158,7 @@ export default function ImportExportDashboard() {
         }
         const weightQuery = {
           ...currentQuery,
-          metric: newMetric
+          metric: newMetric,
         };
         handleQuerySubmit(weightQuery);
         break;
@@ -152,36 +184,12 @@ export default function ImportExportDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" dir="rtl">
       <div className="container mx-auto px-4 py-8">
-        <header className="mb-8">
-          <div className="flex items-center justify-between mb-4 bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center gap-4">
-              <div className="flex justify-center">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow-md">
-                  <ArrowUpRight className="w-9 h-9" />
-                </div>
-              </div>
-              <div>
-                <h1 className="text-2xl font-semibold  mb-2 text-indigo-600">اتجاهات السوق</h1>
-                <p className="text-sm text-slate-600">نظام إدارة الشحن والتصدير</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setActiveModal('ask')}
-                className="flex items-center gap-2 px-6 py-3 cursor-pointer rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all hover:shadow-xl border border-slate-300 bg-white"
-              >
-                <MessageCircle className="w-5 h-5" />
-                <span>إسالني</span>
-              </button>
-              <Link to="/login" className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl">
-                <span className="btn-text">تسجيل الدخول</span>
-              </Link>
-            </div>
-          </div>
-        </header>
+        <Header onAskClick={() => setActiveModal('ask')} />
 
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-slate-900 mb-2">استعلام حجم الاستيراد أو التصدير من منتجـ(ات) معينة</h1>
+          <h1 className="text-2xl font-semibold text-slate-900 mb-2">
+            استعلام حجم الاستيراد أو التصدير من منتجـ(ات) معينة
+          </h1>
           <p className="text-slate-600">استعلامات متعددة الأبعاد مع تصور بياني</p>
         </div>
 
@@ -193,48 +201,22 @@ export default function ImportExportDashboard() {
             onMonthClick={handleMonthClick}
             showMonthClickHint={showMonthClickHint}
           />
-          <SuggestedQueries
-            onAction={handleSuggestedQueryAction}
-            currentQuery={currentQuery}
-          />
+          <SuggestedQueries onAction={handleSuggestedQueryAction} currentQuery={currentQuery} />
         </div>
       </div>
 
       {activeModal === 'drilldown' && selectedMonth && (
-        <DrilldownModal
-          month={selectedMonth}
-          query={currentQuery}
-          onClose={handleCloseModal}
-        />
+        <DrilldownModal month={selectedMonth} query={currentQuery} onClose={handleCloseModal} />
       )}
 
-      {activeModal === 'tariff' && (
-        <TariffModal
-          query={currentQuery}
-          onClose={handleCloseModal}
-        />
-      )}
+      {activeModal === 'tariff' && <TariffModal query={currentQuery} onClose={handleCloseModal} />}
 
-      {activeModal === 'ports' && (
-        <PortDistributionModal
-          query={currentQuery}
-          onClose={handleCloseModal}
-        />
-      )}
+      {activeModal === 'ports' && <PortDistributionModal query={currentQuery} onClose={handleCloseModal} />}
 
-      {activeModal === 'companies' && (
-        <ClearanceCompaniesModal
-          query={currentQuery}
-          onClose={handleCloseModal}
-        />
-      )}
+      {activeModal === 'companies' && <ClearanceCompaniesModal query={currentQuery} onClose={handleCloseModal} />}
 
       {activeModal === 'ask' && (
-        <AskModal
-          currentQuery={currentQuery}
-          onClose={handleCloseModal}
-          onQueryGenerate={handleQuerySubmit}
-        />
+        <AskModal currentQuery={currentQuery} onClose={handleCloseModal} onQueryGenerate={handleQuerySubmit} />
       )}
     </div>
   );
