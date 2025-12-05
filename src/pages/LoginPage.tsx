@@ -1,16 +1,77 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Checkbox } from "../components/ui/checkbox";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [email, setEmail] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+
+  const [errors, setErrors] = useState<{ email?: string }>({});
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const validate = () => {
+    const newErrors: { email?: string } = {};
+
+    if (!email) {
+      newErrors.email = "البريد الإلكتروني مطلوب";
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        newErrors.email = "صيغة البريد الإلكتروني غير صحيحة";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("تم تسجيل الدخول بنجاح!");
-    navigate("/");
+    setServerError(null);
+
+    if (!validate()) return;
+
+    try {
+      setIsSubmitting(true);
+
+      // غيّر الرابط حسب الـ API عندك
+      const res = await fetch("https://api.example.com/auth/request-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          rememberMe,
+        }),
+      });
+
+      if (!res.ok) {
+        try {
+          const errorData = await res.json();
+          if (errorData?.message) {
+            throw new Error(errorData.message);
+          }
+        } catch {
+          // تجاهل خطأ البودي
+        }
+        throw new Error("تعذر إرسال رمز التحقق، الرجاء المحاولة لاحقاً.");
+      }
+
+      // لو تحتاج تقرأ شيء من الريسبونس:
+      // const data = await res.json();
+
+      // بعد نجاح إرسال الـ OTP نروح لصفحة OTP ومعنا الإيميل
+      navigate("/otp", { state: { email } });
+    } catch (err: any) {
+      setServerError(err.message || "حدث خطأ غير متوقع، الرجاء المحاولة لاحقاً.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -29,38 +90,59 @@ const LoginPage: React.FC = () => {
 
         <div className="mb-8 text-right">
           <h2 className="text-2xl font-semibold text-slate-900 mb-2">تسجيل الدخول</h2>
-          <p className="text-sm text-slate-600">أدخل بياناتك للوصول إلى حسابك</p>
+          <p className="text-sm text-slate-600">أدخل بريدك الإلكتروني لإرسال رمز التحقق</p>
         </div>
+
+        {serverError && (
+          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-3 text-right">
+            {serverError}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="mb-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2 text-right">
+            <label
+              className="block text-sm font-medium text-slate-700 mb-2 text-right"
+              htmlFor="email"
+            >
               البريد الإلكتروني
             </label>
-            <Input type="email" required placeholder="name@example.com" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+              className={errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
+            />
+            {errors.email && (
+              <p className="mt-1 text-xs text-red-500 text-right">{errors.email}</p>
+            )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2 text-right">
-              كلمة المرور
-            </label>
-            <Input type="password" required placeholder="أدخل كلمة المرور" />
-          </div>
+
           <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2">
-              <Checkbox />
-              <span className="text-slate-700">تذكرني</span>
-            </label>
-            <button type="button" className="text-blue-600 hover:text-blue-700">
-              نسيت كلمة المرور؟
-            </button>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="remember"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(!!checked)}
+              />
+              <label htmlFor="remember" className="text-slate-700 cursor-pointer">
+                تذكرني
+              </label>
+            </div>
           </div>
-          <button type="submit" className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl w-full justify-center">
-            تسجيل الدخول
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? "جاري الإرسال..." : "إرسال رمز التحقق"}
           </button>
         </form>
 
-        <p className="text-center
- mt-6 text-sm text-slate-600">
+        <p className="text-center mt-6 text-sm text-slate-600">
           ليس لديك حساب؟{" "}
           <button
             type="button"

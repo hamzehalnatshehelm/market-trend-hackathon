@@ -1,18 +1,38 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+
+interface LocationState {
+  state?: {
+    email?: string;
+  };
+}
 
 const OtpPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation() as { state?: { email?: string } };
-  const email = location.state?.email || "example@email.com";
+  const location = useLocation() as LocationState;
+  const email = location.state?.email || "";
+
   const [values, setValues] = useState(["", "", "", ""]);
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
+
+  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    // لو ما في إيميل (دخل مباشرة على صفحة OTP) رجّعه للّوجين
+    if (!email) {
+      navigate("/login");
+    }
+  }, [email, navigate]);
 
   const handleChange = (index: number, value: string) => {
     if (!/^[0-9]?$/.test(value)) return;
     const next = [...values];
     next[index] = value;
     setValues(next);
+    setError(null);
+
     if (value && index < inputsRef.current.length - 1) {
       inputsRef.current[index + 1]?.focus();
     }
@@ -24,14 +44,82 @@ const OtpPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("تم تأكيد الحساب بنجاح!");
-    navigate("/subscription");
+    setError(null);
+    setServerError(null);
+
+    const otp = values.join("");
+    if (otp.length !== values.length) {
+      setError("الرجاء إدخال رمز التحقق بالكامل.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      // غيّر الرابط حسب الـ API عندك
+      const res = await fetch("https://api.example.com/auth/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          otp,
+        }),
+      });
+
+      if (!res.ok) {
+        try {
+          const errorData = await res.json();
+          if (errorData?.message) {
+            throw new Error(errorData.message);
+          }
+        } catch {
+          // تجاهل خطأ البودي
+        }
+        throw new Error("رمز التحقق غير صحيح أو منتهي، الرجاء المحاولة مرة أخرى.");
+      }
+
+      const data = await res.json();
+
+      // مثال: حفظ التوكن
+      if (data.token) {
+        localStorage.setItem("authToken", data.token);
+      }
+
+      alert("تم تأكيد الحساب بنجاح!");
+      navigate("/subscription");
+    } catch (err: any) {
+      setServerError(err.message || "حدث خطأ غير متوقع، الرجاء المحاولة لاحقاً.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const resendOtp = () => {
-    alert("تم إعادة إرسال رمز التحقق!");
+  const resendOtp = async () => {
+    setServerError(null);
+    setError(null);
+
+    try {
+      // إعادة إرسال OTP
+      const res = await fetch("https://api.example.com/auth/resend-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok) {
+        throw new Error("تعذر إعادة إرسال رمز التحقق، الرجاء المحاولة لاحقاً.");
+      }
+
+      alert("تم إعادة إرسال رمز التحقق!");
+    } catch (err: any) {
+      setServerError(err.message || "حدث خطأ غير متوقع، الرجاء المحاولة لاحقاً.");
+    }
   };
 
   return (
@@ -39,7 +127,7 @@ const OtpPage: React.FC = () => {
       <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
         <button
           type="button"
-          onClick={() => navigate("/register")}
+          onClick={() => navigate("/login")}
           className="mb-6 text-sm text-slate-600 flex items-center gap-1"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,8 +137,10 @@ const OtpPage: React.FC = () => {
         </button>
 
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ backgroundColor: "#EEF2FF" }}>
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+            style={{ backgroundColor: "#EEF2FF" }}
+          >
             <svg
               width="32"
               height="32"
@@ -70,8 +160,16 @@ const OtpPage: React.FC = () => {
             تأكيد البريد الإلكتروني
           </h2>
           <p className="text-sm text-slate-600 mb-1">تم إرسال رمز التحقق إلى</p>
-          <p className="text-sm font-medium text-blue-600">{email}</p>
+          <p className="text-sm font-medium text-blue-600">
+            {email || "example@email.com"}
+          </p>
         </div>
+
+        {serverError && (
+          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-3 text-right">
+            {serverError}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -93,10 +191,17 @@ const OtpPage: React.FC = () => {
                 />
               ))}
             </div>
+            {error && (
+              <p className="mt-2 text-xs text-red-500 text-center">{error}</p>
+            )}
           </div>
-          <button type="submit" className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl w-full justify-center"
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            تأكيد الحساب
+            {isSubmitting ? "جاري التحقق..." : "تأكيد الحساب"}
           </button>
         </form>
 
@@ -115,4 +220,4 @@ const OtpPage: React.FC = () => {
   );
 };
 
-export default OtpPage;
+export default OtpPage; 

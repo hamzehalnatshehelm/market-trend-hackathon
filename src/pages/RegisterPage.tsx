@@ -1,16 +1,110 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Checkbox } from "../components/ui/checkbox";
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [fullName, setFullName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [email, setEmail] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
+  const [errors, setErrors] = useState<{
+    fullName?: string;
+    mobile?: string;
+    email?: string;
+    terms?: string;
+  }>({});
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const validate = () => {
+    const newErrors: {
+      fullName?: string;
+      mobile?: string;
+      email?: string;
+      terms?: string;
+    } = {};
+
+    if (!fullName.trim()) {
+      newErrors.fullName = "الاسم الكامل مطلوب";
+    }
+
+    if (!mobile.trim()) {
+      newErrors.mobile = "رقم الجوال مطلوب";
+    } else {
+      // تحقق بسيط لرقم سعودي (تقديري، عدله حسب الحاجة)
+      const saMobileRegex = /^(?:\+?966|0)?5[0-9]{8}$/;
+      if (!saMobileRegex.test(mobile.replace(/\s+/g, ""))) {
+        newErrors.mobile = "الرجاء إدخال رقم جوال صحيح";
+      }
+    }
+
+    if (!email.trim()) {
+      newErrors.email = "البريد الإلكتروني مطلوب";
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        newErrors.email = "صيغة البريد الإلكتروني غير صحيحة";
+      }
+    }
+
+    if (!termsAccepted) {
+      newErrors.terms = "يجب الموافقة على الشروط والأحكام وسياسة الخصوصية";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/otp", { state: { email } });
+    setServerError(null);
+
+    if (!validate()) return;
+
+    try {
+      setIsSubmitting(true);
+
+      // غيّر الرابط حسب API الباك إند عندك
+      const res = await fetch("https://api.example.com/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName,
+          mobile,
+          email,
+          // ممكن ترسل termsAccepted لو الباك إند يحتاجه
+          termsAccepted,
+        }),
+      });
+
+      if (!res.ok) {
+        try {
+          const errorData = await res.json();
+          if (errorData?.message) {
+            throw new Error(errorData.message);
+          }
+        } catch {
+          // تجاهل أخطاء الـ parsing
+        }
+        throw new Error("تعذر إنشاء الحساب، الرجاء المحاولة لاحقاً.");
+      }
+
+      // لو فيه بيانات تحتاجها من الريسبونس:
+      // const data = await res.json();
+
+      // بعد نجاح التسجيل وإرسال OTP ننتقل لصفحة التحقق
+      navigate("/otp", { state: { email } });
+    } catch (err: any) {
+      setServerError(err.message || "حدث خطأ غير متوقع، الرجاء المحاولة لاحقاً.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -32,39 +126,83 @@ const RegisterPage: React.FC = () => {
           <p className="text-sm text-slate-600">أدخل معلوماتك للبدء</p>
         </div>
 
+        {serverError && (
+          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-3 text-right">
+            {serverError}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* الاسم الكامل */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2 text-right">
+            <label
+              className="block text-sm font-medium text-slate-700 mb-2 text-right"
+              htmlFor="fullName"
+            >
               الاسم الكامل
             </label>
-            <Input type="text" required placeholder="أدخل اسمك الكامل" />
+            <Input
+              id="fullName"
+              type="text"
+              placeholder="أدخل اسمك الكامل"
+              value={fullName}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)}
+              className={errors.fullName ? "border-red-500 focus-visible:ring-red-500" : ""}
+            />
+            {errors.fullName && (
+              <p className="mt-1 text-xs text-red-500 text-right">{errors.fullName}</p>
+            )}
           </div>
+
+          {/* رقم الجوال */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2 text-right">
+            <label
+              className="block text-sm font-medium text-slate-700 mb-2 text-right"
+              htmlFor="mobile"
+            >
               رقم الجوال
             </label>
-            <Input type="tel" required placeholder="+966 5XX XXX XXX" />
+            <Input
+              id="mobile"
+              type="tel"
+              placeholder="+966 5XX XXX XXX"
+              value={mobile}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMobile(e.target.value)}
+              className={errors.mobile ? "border-red-500 focus-visible:ring-red-500" : ""}
+            />
+            {errors.mobile && (
+              <p className="mt-1 text-xs text-red-500 text-right">{errors.mobile}</p>
+            )}
           </div>
+
+          {/* البريد الإلكتروني */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2 text-right">
+            <label
+              className="block text-sm font-medium text-slate-700 mb-2 text-right"
+              htmlFor="email"
+            >
               البريد الإلكتروني
             </label>
             <Input
+              id="email"
               type="email"
-              required
               placeholder="name@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+              className={errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
             />
+            {errors.email && (
+              <p className="mt-1 text-xs text-red-500 text-right">{errors.email}</p>
+            )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2 text-right">
-              كلمة المرور
-            </label>
-            <Input type="password" required placeholder="أدخل كلمة مرور قوية" />
-          </div>
+
+          {/* الموافقة على الشروط */}
           <div className="flex items-start gap-2 text-xs text-slate-600">
-            <Checkbox className="mt-1" required />
+            <Checkbox
+              className="mt-1"
+              checked={termsAccepted}
+              onCheckedChange={(checked) => setTermsAccepted(!!checked)}
+            />
             <span>
               أوافق على{" "}
               <button type="button" className="text-blue-600 hover:text-blue-700">
@@ -76,9 +214,16 @@ const RegisterPage: React.FC = () => {
               </button>
             </span>
           </div>
-          <button type="submit" className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl w-full justify-center"
+          {errors.terms && (
+            <p className="mt-1 text-xs text-red-500 text-right">{errors.terms}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            إنشاء الحساب
+            {isSubmitting ? "جاري إنشاء الحساب..." : "إنشاء الحساب"}
           </button>
         </form>
 
