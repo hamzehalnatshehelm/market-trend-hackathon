@@ -14,8 +14,8 @@ const App: React.FC = () => {
   return (
     <div dir="rtl" className="min-h-screen bg-slate-50">
       <Routes>
-        <Route path="/" element={<ImportExportDashboard />} />
-        <Route path="/home" element={<HomePage />} />
+        <Route path="/dashboard" element={<ImportExportDashboard />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/otp" element={<OtpPage />} />

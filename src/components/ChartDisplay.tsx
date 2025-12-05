@@ -16,13 +16,6 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
   const [showHintMessage, setShowHintMessage] = useState(true);
   const [timeGrouping, setTimeGrouping] = useState<'month' | 'quarter' | 'half' | 'year' | 'decade'>('month');
 
-  useEffect(() => {
-    if (showHintMessage) {
-      const timer = setTimeout(() => setShowHintMessage(false), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [showHintMessage]);
-
   // Reset hint message when new query is executed
   useEffect(() => {
     setShowHintMessage(true);
