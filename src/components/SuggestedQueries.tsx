@@ -1,13 +1,16 @@
 import { Lightbulb, ChevronLeft } from 'lucide-react';
 import { QueryData } from '../pages/ImportExportDashboard';
 
+type SuggestedAction = 'monthly' | 'tariff' | 'weight' | 'ports' | 'companies';
+
 interface SuggestedQueriesProps {
-  onAction: (action: 'monthly' | 'tariff' | 'weight' | 'ports' | 'companies') => void;
+  onAction: (action: SuggestedAction) => void;
   currentQuery: QueryData;
 }
 
 export function SuggestedQueries({ onAction, currentQuery }: SuggestedQueriesProps) {
-  const isSpecificPortSelected = currentQuery.port !== 'جميع المنافذ' &&
+  const isSpecificPortSelected =
+    currentQuery.port !== 'جميع المنافذ' &&
     !currentQuery.port.includes('جميع المنافذ');
 
   // Get metric label based on current query
@@ -32,48 +35,56 @@ export function SuggestedQueries({ onAction, currentQuery }: SuggestedQueriesPro
   const suggestedQueries: Array<{
     title: string;
     description: string;
-    action: 'monthly' | 'tariff' | 'weight' | 'ports' | 'companies';
+    action: SuggestedAction;
     hideCondition?: boolean;
   }> = [
-      {
-        title: `هل تحب أن أزودك برسم بياني يرصد التغير في ${getMetricLabel()} كل شهر؟`,
-        description: 'عرض تفصيلي للتغيرات الشهرية مع مؤشرات النمو',
-        action: 'monthly'
-      },
-      {
-        title: 'هل تريد تصنيف النتائج بناءً على التعرفة الجمركية؟',
-        description: 'تحليل مفصل حسب رموز التعرفة الجمركية الدولية',
-        action: 'tariff'
-      },
-      {
-        title: `هل تريد البحث بدلالة ${currentQuery.metric === 'عدد الوحدات' ? 'الكيلو جرامات عوضاً عن عدد الوحدات' : currentQuery.metric === 'الوزن الإجمالي' ? 'عدد الوحدات عوضاً عن الوزن' : 'عدد الوحدات عوضاً عن عدد الشحنات'} ثم مقارنتها مع السنة الماضية؟`,
-        description: 'مقارنة المقاييس المختلفة مع السنة الماضية',
-        action: 'weight'
-      },
-      {
-        title: 'هل تريد معرفة أي من المنافذ كان الأكثر استخداماً؟',
-        description: `ترتيب المنافذ الجمركية حسب حجم ${getDirectionLabel()}`,
-        action: 'ports',
-        hideCondition: isSpecificPortSelected
-      },
-      {
-        title: `هل ترغب بالحصول على قائمة بشركات التخليص الجمركي على هذا المنفذ مرتبة بحسب حجم ${getDirectionLabel()}؟`,
-        description: `شركات التخليص مع بيانات الاتصال مرتبة حسب حجم ${getDirectionLabel()}`,
-        action: 'companies'
-      }
-    ];
+    {
+      title: `هل تحب أن أزودك برسم بياني يرصد التغير في ${getMetricLabel()} كل شهر؟`,
+      description: 'عرض تفصيلي للتغيرات الشهرية مع مؤشرات النمو',
+      action: 'monthly',
+    },
+    {
+      title: 'هل تريد تصنيف النتائج بناءً على التعرفة الجمركية؟',
+      description: 'تحليل مفصل حسب رموز التعرفة الجمركية الدولية',
+      action: 'tariff',
+    },
+    {
+      title: `هل تريد البحث بدلالة ${
+        currentQuery.metric === 'عدد الوحدات'
+          ? 'الكيلو جرامات عوضاً عن عدد الوحدات'
+          : currentQuery.metric === 'الوزن الإجمالي'
+          ? 'عدد الوحدات عوضاً عن الوزن'
+          : 'عدد الوحدات عوضاً عن عدد الشحنات'
+      } ثم مقارنتها مع السنة الماضية؟`,
+      description: 'مقارنة المقاييس المختلفة مع السنة الماضية',
+      action: 'weight',
+    },
+    {
+      title: 'هل تريد معرفة أي من المنافذ كان الأكثر استخداماً؟',
+      description: `ترتيب المنافذ الجمركية حسب حجم ${getDirectionLabel()}`,
+      action: 'ports',
+      hideCondition: isSpecificPortSelected,
+    },
+    {
+      title: `هل ترغب بالحصول على قائمة بشركات التخليص الجمركي على هذا المنفذ مرتبة بحسب حجم ${getDirectionLabel()}؟`,
+      description: `شركات التخليص مع بيانات الاتصال مرتبة حسب حجم ${getDirectionLabel()}`,
+      action: 'companies',
+    },
+  ];
 
-  const visibleQueries = suggestedQueries.filter(q => !q.hideCondition);
+  const visibleQueries = suggestedQueries.filter((q) => !q.hideCondition);
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+        <div className="w-10 ه-10 bg-yellow-100 rounded-lg flex items-center justify-center">
           <Lightbulb className="w-5 h-5 text-yellow-600" />
         </div>
         <div>
           <h2 className="text-xl font-semibold text-slate-900">استعلامات مقترحة</h2>
-          <p className="text-sm text-slate-600">اختر أحد الاستعلامات للحصول على رؤى تحليلية أعمق</p>
+          <p className="text-sm text-slate-600">
+            اختر أحد الاستعلامات للحصول على رؤى تحليلية أعمق
+          </p>
         </div>
       </div>
 
