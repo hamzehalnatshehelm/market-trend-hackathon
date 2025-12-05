@@ -153,10 +153,34 @@ export default function ImportExportDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" dir="rtl">
       <div className="container mx-auto px-4 py-8">
         <header className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-semibold text-slate-900 mb-2">استعلام حجم الاستيراد أو التصدير من منتجـ(ات) معينة</h1>
-              <p className="text-slate-600">استعلامات متعددة الأبعاد مع تصور بياني</p>
+          <div className="flex items-center justify-between mb-4 bg-white rounded-2xl shadow-lg p-6">
+            <div className="flex items-center gap-4">
+              <div className="flex justify-center">
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                  style={{ backgroundColor: "#4F46E5" }}
+                >
+                  <svg
+                    width="36"
+                    height="36"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    {/* خط الترند الصاعد */}
+                    <path d="M3 17l6-6 4 4 8-8" />
+                    {/* زاوية السهم */}
+                    <path d="M14 7h7v7" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold text-slate-900 mb-2">اتجاهات السوق</h1>
+                <p className="text-sm text-slate-600">نظام إدارة الشحن والتصدير</p>
+              </div>
             </div>
             <div className="flex items-center gap-4">
               <button
@@ -164,7 +188,7 @@ export default function ImportExportDashboard() {
                 className="flex items-center gap-2 px-6 py-3 cursor-pointer rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all hover:shadow-xl border border-slate-300 bg-white"
               >
                 <MessageCircle className="w-5 h-5" />
-                <span>ASK</span>
+                <span>إسالني</span>
               </button>
               <Link to="/login" className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl">
                 <span className="btn-text">تسجيل الدخول</span>
@@ -172,6 +196,11 @@ export default function ImportExportDashboard() {
             </div>
           </div>
         </header>
+
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-slate-900 mb-2">استعلام حجم الاستيراد أو التصدير من منتجـ(ات) معينة</h1>
+          <p className="text-slate-600">استعلامات متعددة الأبعاد مع تصور بياني</p>
+        </div>
 
         <div className="space-y-6">
           <QueryBuilder onSubmit={handleQuerySubmit} initialQuery={currentQuery} />
