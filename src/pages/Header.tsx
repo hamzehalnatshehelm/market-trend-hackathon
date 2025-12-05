@@ -22,14 +22,14 @@ export default function Header({ onAskClick }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link
+          {/* <Link
             to="/subscription"
             className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
           >
             <span className="btn-text">
               اشترك الآن
             </span>
-          </Link>
+          </Link> */}
           <button
             onClick={onAskClick}
             className="flex items-center gap-2 px-6 py-3 cursor-pointer rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all hover:shadow-xl border border-slate-300 bg-white"
@@ -42,7 +42,7 @@ export default function Header({ onAskClick }: HeaderProps) {
             to="/login"
             className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
           >
-            <span className="btn-text">تسجيل الدخول</span>
+            <span className="btn-text">اشترك الآن</span>
           </Link>
         </div>
       </div>

@@ -230,7 +230,7 @@ export function ChartDisplay({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6">
+    <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
       {/* Header + Export */}
       <div className="flex items-start justify-between mb-6">
         <div>

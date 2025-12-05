@@ -37,7 +37,6 @@ export interface CompanyData {
 
 type ModalType = 'drilldown' | 'tariff' | 'ports' | 'companies' | 'ask' | null;
 
-// 🧩 دالة مساعدة لتحويل QueryData إلى query string
 const buildQueryString = (query: QueryData) => {
   const params = new URLSearchParams();
 
@@ -65,17 +64,18 @@ export default function ImportExportDashboard() {
     port: 'جميع المنافذ',
   });
 
-  // Store data per query configuration to maintain consistency
   const [dataCache] = useState<Map<string, ChartDataPoint[]>>(new Map());
-  const [userModifiedDates, setUserModifiedDates] = useState(false);
-
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [showMonthClickHint, setShowMonthClickHint] = useState(false);
 
-  // ✅ جديد: لمعرفة هل فيه بحث أم لا
   const [hasSearched, setHasSearched] = useState(false);
+
+  // Tabs as buttons
+  const [activeTab, setActiveTab] = useState<
+    'volume' | 'unitCost' | 'efficiency'
+  >('volume');
 
   const getCacheKey = (query: QueryData) => {
     return JSON.stringify({
@@ -88,15 +88,13 @@ export default function ImportExportDashboard() {
     });
   };
 
-  // 🔄 استدعاء API حسب الـ query + query params
   const handleQuerySubmit = async (query: QueryData) => {
     setCurrentQuery(query);
     setShowMonthClickHint(false);
-    setHasSearched(true); // 👈 من الآن فصاعدًا نعرض النتائج
+    setHasSearched(true);
 
     const cacheKey = getCacheKey(query);
 
-    // لو البيانات موجودة في الكاش لنفس الـ query استخدمها
     if (dataCache.has(cacheKey)) {
       setChartData(dataCache.get(cacheKey)!);
       return;
@@ -108,36 +106,23 @@ export default function ImportExportDashboard() {
 
       const response = await fetch(url);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch chart data');
-      }
+      if (!response.ok) throw new Error('API Error');
 
       const apiData = (await response.json()) as ChartDataPoint[];
 
       dataCache.set(cacheKey, apiData);
       setChartData(apiData);
     } catch (error) {
-      console.error('Error fetching chart data from API:', error);
-
-      // 📉 في حال فشل الـ API استخدم fallback (تقدر تشيله لو ما تحتاجه)
       const months = [
-        'يناير',
-        'فبراير',
-        'مارس',
-        'أبريل',
-        'مايو',
-        'يونيو',
-        'يوليو',
-        'أغسطس',
-        'سبتمبر',
-        'أكتوبر',
-        'نوفمبر',
-        'ديسمبر',
+        'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+        'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
       ];
-      const newData = months.map((month) => ({
-        name: month,
+
+      const newData = months.map((m) => ({
+        name: m,
         value: Math.floor(Math.random() * 50000) + 30000,
       }));
+
       dataCache.set(cacheKey, newData);
       setChartData(newData);
     }
@@ -151,36 +136,35 @@ export default function ImportExportDashboard() {
         setShowMonthClickHint(true);
         setTimeout(() => setShowMonthClickHint(false), 5000);
         break;
+
       case 'tariff':
         setActiveModal('tariff');
         break;
+
       case 'weight': {
-        let newMetric = 'عدد الوحدات';
-        if (currentQuery.metric === 'عدد الوحدات') {
-          newMetric = 'الوزن الإجمالي';
-        } else if (currentQuery.metric === 'الوزن الإجمالي') {
-          newMetric = 'عدد الشحنات';
-        } else {
-          newMetric = 'عدد الوحدات';
-        }
-        const weightQuery: QueryData = {
-          ...currentQuery,
-          metric: newMetric,
-        };
-        handleQuerySubmit(weightQuery);
+        let newMetric =
+          currentQuery.metric === 'عدد الوحدات'
+            ? 'الوزن الإجمالي'
+            : currentQuery.metric === 'الوزن الإجمالي'
+              ? 'عدد الشحنات'
+              : 'عدد الوحدات';
+
+        handleQuerySubmit({ ...currentQuery, metric: newMetric });
         break;
       }
+
       case 'ports':
         setActiveModal('ports');
         break;
+
       case 'companies':
         setActiveModal('companies');
         break;
     }
   };
 
-  const handleMonthClick = (monthName: string) => {
-    setSelectedMonth(monthName);
+  const handleMonthClick = (month: string) => {
+    setSelectedMonth(month);
     setActiveModal('drilldown');
   };
 
@@ -194,70 +178,106 @@ export default function ImportExportDashboard() {
       <div className="container mx-auto px-4 py-8">
         <Header onAskClick={() => setActiveModal('ask')} />
 
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-slate-900 mb-2">
-            استعلام حجم الاستيراد أو التصدير من منتجـ(ات) معينة
-          </h1>
-          <p className="text-slate-600">استعلامات متعددة الأبعاد مع تصور بياني</p>
+        {/* Buttons Tabs */}
+        <div className="flex flex-wrap gap-3 mb-6">
+          <button
+            onClick={() => setActiveTab('volume')}
+            className={`px-4 py-3 rounded-xl font-medium text-sm border transition-all w-fit
+      ${activeTab === 'volume'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+              }`}
+          >
+            حجم الاستيراد أو التصدير
+          </button>
+
+          <button
+            onClick={() => setActiveTab('unitCost')}
+            className={`px-4 py-3 rounded-xl font-medium text-sm border transition-all w-fit
+      ${activeTab === 'unitCost'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+              }`}
+          >
+            التغير في تكلفة الوحدة
+          </button>
+
+          <button
+            onClick={() => setActiveTab('efficiency')}
+            className={`px-4 py-3 rounded-xl font-medium text-sm border transition-all w-fit
+      ${activeTab === 'efficiency'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+              }`}
+          >
+            الكفاءة الوقتية لشركاء التخليص
+          </button>
         </div>
 
-        <div className="space-y-6">
-          {/* 🧱 QueryBuilder دائمًا ظاهر عشان المستخدم يقدر يبحث */}
-          <QueryBuilder
-            onSubmit={handleQuerySubmit}
-            initialQuery={currentQuery}
-          />
+        {/* Tab Content */}
+        {activeTab === 'unitCost' && (
+          <div className="mb-8 bg-amber-50 border border-amber-200 p-5 rounded-xl text-amber-800">
+            🌟 سيتم توفير هذا الاستعلام قريباً — نعمل حالياً على تطوير تحليل التغير في تكلفة الوحدة.
+          </div>
+        )}
 
-          {/* ⬅️ هنا نخفي كل شيء مرتبط بالنتائج لو ما فيه بحث */}
-          {hasSearched && (
-            <>
-              <ChartDisplay
-                data={chartData}
-                query={currentQuery}
-                onMonthClick={handleMonthClick}
-                showMonthClickHint={showMonthClickHint}
-              />
+        {activeTab === 'efficiency' && (
+          <div className="mb-8 bg-amber-50 border border-amber-200 p-5 rounded-xl text-amber-800">
+            ⏱️ سيتم توفير هذا الاستعلام قريباً — قسم الكفاءة الوقتية لشركاء التخليص تحت التطوير.
+          </div>
+        )}
 
-              <SuggestedQueries
-                onAction={handleSuggestedQueryAction}
-                currentQuery={currentQuery}
-              />
-            </>
-          )}
-        </div>
+        {activeTab === 'volume' && (
+          <>
+            <div className="mb-8">
+              <h1 className="text-2xl font-semibold text-slate-900 mb-2">
+                استعلام حجم الاستيراد أو التصدير من منتجـ(ات) معينة
+              </h1>
+              <p className="text-slate-600">استعلامات متعددة الأبعاد مع تصور بياني</p>
+            </div>
+
+            <QueryBuilder
+              onSubmit={handleQuerySubmit}
+              initialQuery={currentQuery}
+            />
+
+            {hasSearched && (
+              <>
+                <ChartDisplay
+                  data={chartData}
+                  query={currentQuery}
+                  onMonthClick={handleMonthClick}
+                  showMonthClickHint={showMonthClickHint}
+                />
+
+                <SuggestedQueries
+                  onAction={handleSuggestedQueryAction}
+                  currentQuery={currentQuery}
+                />
+              </>
+            )}
+          </>
+        )}
       </div>
 
-      {/* حتى المودالات المرتبطة بالنتائج يفضل ما تفتح إلا بعد بحث، لكن لو حاب نخليها مربوطة بالـ state فقط */}
-      {hasSearched && activeModal === 'drilldown' && selectedMonth && (
-        <DrilldownModal
-          month={selectedMonth}
-          query={currentQuery}
-          onClose={handleCloseModal}
-        />
+      {/* Result Modals */}
+      {activeTab === 'volume' && hasSearched && activeModal === 'drilldown' && selectedMonth && (
+        <DrilldownModal month={selectedMonth} query={currentQuery} onClose={handleCloseModal} />
       )}
 
-      {hasSearched && activeModal === 'tariff' && (
-        <TariffModal
-          query={currentQuery}
-          onClose={handleCloseModal}
-        />
+      {activeTab === 'volume' && hasSearched && activeModal === 'tariff' && (
+        <TariffModal query={currentQuery} onClose={handleCloseModal} />
       )}
 
-      {hasSearched && activeModal === 'ports' && (
-        <PortDistributionModal
-          query={currentQuery}
-          onClose={handleCloseModal}
-        />
+      {activeTab === 'volume' && hasSearched && activeModal === 'ports' && (
+        <PortDistributionModal query={currentQuery} onClose={handleCloseModal} />
       )}
 
-      {hasSearched && activeModal === 'companies' && (
-        <ClearanceCompaniesModal
-          query={currentQuery}
-          onClose={handleCloseModal}
-        />
+      {activeTab === 'volume' && hasSearched && activeModal === 'companies' && (
+        <ClearanceCompaniesModal query={currentQuery} onClose={handleCloseModal} />
       )}
 
-      {/* AskModal ممكن تخليه يشتغل حتى بدون بحث، لذلك ما ربطته بـ hasSearched */}
+      {/* AskModal always works */}
       {activeModal === 'ask' && (
         <AskModal
           currentQuery={currentQuery}

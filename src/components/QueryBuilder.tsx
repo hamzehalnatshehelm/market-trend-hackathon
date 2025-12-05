@@ -127,7 +127,7 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6">
+    <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-xl font-semibold text-slate-900">بناء الاستعلام</h2>
         {optionsLoading && (
