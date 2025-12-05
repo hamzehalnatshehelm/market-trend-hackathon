@@ -7,7 +7,7 @@ import { PortDistributionModal } from '../components/PortDistributionModal';
 import { ClearanceCompaniesModal } from '../components/ClearanceCompaniesModal';
 import { AskModal } from '../components/AskModal';
 import { useState } from 'react';
-import { MessageCircle } from 'lucide-react';
+import { ArrowUpRight, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 
@@ -156,29 +156,12 @@ export default function ImportExportDashboard() {
           <div className="flex items-center justify-between mb-4 bg-white rounded-2xl shadow-lg p-6">
             <div className="flex items-center gap-4">
               <div className="flex justify-center">
-                <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                  style={{ backgroundColor: "#4F46E5" }}
-                >
-                  <svg
-                    width="36"
-                    height="36"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    {/* خط الترند الصاعد */}
-                    <path d="M3 17l6-6 4 4 8-8" />
-                    {/* زاوية السهم */}
-                    <path d="M14 7h7v7" />
-                  </svg>
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow-md">
+                  <ArrowUpRight className="w-9 h-9" />
                 </div>
               </div>
               <div>
-                <h1 className="text-2xl font-semibold text-slate-900 mb-2">اتجاهات السوق</h1>
+                <h1 className="text-2xl font-semibold  mb-2 text-indigo-600">اتجاهات السوق</h1>
                 <p className="text-sm text-slate-600">نظام إدارة الشحن والتصدير</p>
               </div>
             </div>

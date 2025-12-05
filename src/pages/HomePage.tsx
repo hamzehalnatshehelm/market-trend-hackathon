@@ -1,95 +1,177 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import {
+  ArrowUpRight,
+  BarChart3,
+  Globe2,
+  FileText,
+  ShieldCheck,
+} from "lucide-react";
 
 const HomePage: React.FC = () => {
-  const navigate = useNavigate();
-
   return (
-    <div dir="rtl" className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center"
-            style={{ backgroundColor: "#4F46E5" }}
-          >
-            <svg
-              width="36"
-              height="36"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              {/* خط الترند الصاعد */}
-              <path d="M3 17l6-6 4 4 8-8" />
-              {/* زاوية السهم */}
-              <path d="M14 7h7v7" />
-            </svg>
-          </div>
-        </div>
+    <div
+      className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center"
+      dir="rtl"
+    >
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        {/* الهيرو الأساسي */}
+        <div className="grid gap-10 lg:grid-cols-[1.4fr,1fr] items-center">
+          {/* يسار: شرح المنتج */}
+          <div className="space-y-8">
+            {/* لوجو + اسم النظام */}
+            <div className="inline-flex items-center gap-3 bg-white/80 rounded-2xl shadow-lg px-4 py-3 border border-slate-100">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow-md">
+                <ArrowUpRight className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-indigo-600">
+                  اتجاهات السوق
+                </p>
+                <p className="text-xs text-slate-500">
+                  نظام إدارة التصدير والاستيراد وتحليل البيانات التجارية
+                </p>
+              </div>
+            </div>
 
-        {/* Title + subtitle */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-slate-900 mb-2">اتجاهات السوق</h1>
-          <p className="text-sm text-slate-600">نظام إدارة الشحن والتصدير</p>
-        </div>
+            <div className="space-y-4">
+              <h1 className="text-3xl md:text-4xl font-bold text-slate-900 leading-relaxed">
+                حوِّل بيانات الاستيراد والتصدير
+                <span className="text-indigo-600"> إلى قرارات فعلية</span>
+              </h1>
+              <p className="text-slate-600 text-sm md:text-base leading-relaxed max-w-xl">
+                اتجاهات السوق يساعدك على فهم حركة المنتجات المستوردة والمصدّرة،
+                تتبع أداء القطاعات المختلفة، واكتشاف الفرص في الأسواق المحلية
+                والعالمية من خلال لوحات تفاعلية وتقارير ذكية جاهزة.
+              </p>
+            </div>
 
-        {/* Buttons */}
-        <div className="flex flex-col gap-3">
-          {/* تسجيل الدخول - زر أساسي بنفسجي */}
-          <button
-            type="button"
-            onClick={() => navigate("/login")}
-            className="w-full py-3 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl"
-          >
-            تسجيل الدخول
-          </button>
-
-          {/* إنشاء حساب جديد - رمادي مثل الصورة */}
-          <button
-            type="button"
-            onClick={() => navigate("/subscription")}
-            className="w-full py-3 rounded-lg text-sm font-medium bg-gray-100 text-slate-900 hover:bg-gray-200 transition-all"
-          >
-            إنشاء حساب جديد
-          </button>
-        </div>
-
-        {/* قسم توضيحي في الأسفل مثل الكرت الصغير في الصورة */}
-        <div className="mt-8 pt-4 border-t border-slate-200">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center bg-indigo-50"
-            >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#4F46E5"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            {/* أزرار CTA */}
+            <div className="flex flex-wrap items-center gap-4">
+              <Link
+                to="/dashboard"
+                className="px-7 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm md:text-base font-medium shadow-md hover:from-blue-700 hover:to-indigo-700 transition-all"
               >
-                <path d="M3 17l4-8 4 6 4-10 4 12" />
-              </svg>
+                ابدأ الاستعلام الآن
+              </Link>
+
+              <Link
+                to="/login"
+                className="px-7 py-3 rounded-lg bg-white border border-slate-200 text-slate-800 text-sm md:text-base font-medium hover:bg-slate-50 shadow-sm transition-all"
+              >
+                تسجيل الدخول
+              </Link>
+
+              <span className="text-xs text-slate-500">
+                لا حاجة لخبرة تقنية متقدمة – كل شيء جاهز في لوحة واحدة.
+              </span>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-900">
-                تقارير تحليلية متقدمة
-              </p>
-              <p className="text-xs text-slate-500">
-                احصل على رؤية شاملة ومفصلة لجميع عمليات الشحن
-              </p>
+
+            {/* نقاط selling سريعة */}
+            <div className="grid gap-4 sm:grid-cols-3 text-sm">
+              <div className="bg-white rounded-xl border border-slate-100 px-4 py-3 shadow-sm">
+                <p className="font-semibold text-slate-800 mb-1">
+                  رؤية شاملة للسوق
+                </p>
+                <p className="text-slate-500 text-xs">
+                  تحليل حسب القطاع، المنفذ، التعريفة، والفترة الزمنية.
+                </p>
+              </div>
+              <div className="bg-white rounded-xl border border-slate-100 px-4 py-3 shadow-sm">
+                <p className="font-semibold text-slate-800 mb-1">
+                  بيانات موثوقة
+                </p>
+                <p className="text-slate-500 text-xs">
+                  استعلامات مبنية على بيانات رسمية محدثة بشكل دوري.
+                </p>
+              </div>
+              <div className="bg-white rounded-xl border border-slate-100 px-4 py-3 shadow-sm">
+                <p className="font-semibold text-slate-800 mb-1">
+                  تقارير جاهزة للمشاركة
+                </p>
+                <p className="text-slate-500 text-xs">
+                  تصدير النتائج إلى Excel أو PDF ومشاركتها مع فريقك.
+                </p>
+              </div>
             </div>
           </div>
+
+          {/* يمين: كرت خاص بالاستيراد والتصدير */}
+               <section className="bg-white rounded-xl border border-slate-100 px-4 py-3 shadow-sm">
+            <div className="flex items-center justify-between gap-4 mb-5">
+              <div>
+                <h2 className="text-base md:text-lg font-semibold text-slate-900 mb-1">
+                  خلية الاستيراد والتصدير
+                </h2>
+                <p className="text-xs md:text-sm text-slate-500">
+                  ركّز على منتج أو مجموعة منتجات محددة، واعرف حجم حركتها عبر
+                  المنافذ والقطاعات المختلفة.
+                </p>
+              </div>
+              <div className="hidden sm:flex items-center justify-center p-3 rounded-2xl bg-white shadow-sm border border-slate-100">
+                <BarChart3 className="w-6 h-6 text-indigo-600" />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3 text-sm">
+              <FeatureItem
+                icon={<Globe2 className="w-4 h-4" />}
+                title="تحليل حسب بلد المنشأ والمنفذ"
+                description="تعرف على أكثر الدول تصديرًا لمنتجاتك، وأي المنافذ تشهد أعلى كثافة في الحركة."
+              />
+              <FeatureItem
+                icon={<FileText className="w-4 h-4" />}
+                title="مؤشرات حجم الشحنات"
+                description="متوسط عدد الشحنات، أعلى شهر نشاطًا، واتجاه النمو أو الانخفاض خلال الفترة المختارة."
+              />
+              <FeatureItem
+                icon={<ShieldCheck className="w-4 h-4" />}
+                title="الربط بالتعرفة الجمركية"
+                description="استعرض البنود التعريفية المرتبطة بالمنتج وحدد أكثرها تكرارًا لتقييم الرسوم والالتزامات."
+              />
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-slate-200 text-[11px] md:text-xs text-slate-500 flex flex-col md:flex-row items-center justify-between gap-2">
+              <span>
+                مثالي للجهات الحكومية، شركات الاستشارات، والمستوردين والمصدّرين
+                الباحثين عن رؤية أوضح لحركة السوق.
+              </span>
+              <span className="text-indigo-600 font-medium">
+                بيانات تفاعلية – استعلامات متعددة الأبعاد – تصدير مباشر للتقارير
+              </span>
+            </div>
+          </section>
+        </div>
+
+        {/* سطر بسيط في الأسفل */}
+        <div className="mt-10 text-center text-xs text-slate-400">
+          &copy; 2025 اتجاهات السوق. جميع الحقوق محفوظة.
         </div>
       </div>
     </div>
   );
 };
+
+interface FeatureItemProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}
+
+const FeatureItem: React.FC<FeatureItemProps> = ({
+  icon,
+  title,
+  description,
+}) => (
+  <div className="flex gap-3 items-start">
+    <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-indigo-600 shadow-sm border border-slate-100">
+      {icon}
+    </div>
+    <div>
+      <p className="font-semibold text-slate-800 mb-1 text-sm">{title}</p>
+      <p className="text-xs text-slate-500 leading-relaxed">{description}</p>
+    </div>
+  </div>
+);
 
 export default HomePage;
