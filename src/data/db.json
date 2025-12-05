@@ -46,17 +46,46 @@
   },
 
   "chartData": [
-    { "id": 1, "name": "يناير 2025", "value": 42000 },
-    { "id": 2, "name": "فبراير 2025", "value": 38000 },
-    { "id": 3, "name": "مارس 2025", "value": 51000 },
-    { "id": 4, "name": "أبريل 2025", "value": 47000 },
-    { "id": 5, "name": "مايو 2025", "value": 53000 },
-    { "id": 6, "name": "يونيو 2025", "value": 49000 },
-    { "id": 7, "name": "يوليو 2025", "value": 45000 },
-    { "id": 8, "name": "أغسطس 2025", "value": 52000 },
-    { "id": 9, "name": "سبتمبر 2025", "value": 48000 },
-    { "id": 10, "name": "أكتوبر 2025", "value": 55000 },
-    { "id": 11, "name": "نوفمبر 2025", "value": 50000 },
-    { "id": 12, "name": "ديسمبر 2025", "value": 57000 }
-  ]
+    { "id": 1, "name": "يناير 2024", "value": 42000 },
+    { "id": 2, "name": "فبراير 2024", "value": 38000 },
+    { "id": 3, "name": "مارس 2024", "value": 51000 },
+    { "id": 4, "name": "أبريل 2024", "value": 47000 },
+    { "id": 5, "name": "مايو 2024", "value": 53000 },
+    { "id": 6, "name": "يونيو 2024", "value": 49000 },
+    { "id": 7, "name": "يوليو 2024", "value": 45000 },
+    { "id": 8, "name": "أغسطس 2024", "value": 52000 },
+    { "id": 9, "name": "سبتمبر 2024", "value": 48000 },
+    { "id": 10, "name": "أكتوبر 2024", "value": 55000 },
+    { "id": 11, "name": "نوفمبر 2024", "value": 50000 },
+    { "id": 12, "name": "ديسمبر 2024", "value": 57000 }
+  ],
+
+  "companyCharts": {
+    "clearanceCompanies": [
+      { "name": "الشركة الوطنية للاستيراد", "value": 37, "percentage": 37, "color": "#1e5a7d" },
+      { "name": "شركة أحمد الحمد للتخليص", "value": 26, "percentage": 26, "color": "#f59e42" },
+      { "name": "شركة الأماني للاستيراد والتصدير", "value": 20, "percentage": 20, "color": "#2d7a4f" },
+      { "name": "آخرون", "value": 17, "percentage": 17, "color": "#4db8d8" }
+    ],
+    "clearanceOthers": [
+      { "name": "شركة النجاح للتخليص", "value": 5, "percentage": 5, "color": "#8b5cf6" },
+      { "name": "شركة الفجر للخدمات الجمركية", "value": 4, "percentage": 4, "color": "#ec4899" },
+      { "name": "شركة البحر الأحمر", "value": 3, "percentage": 3, "color": "#f97316" },
+      { "name": "شركة المستقبل", "value": 2.5, "percentage": 2.5, "color": "#14b8a6" },
+      { "name": "شركات أخرى", "value": 2.5, "percentage": 2.5, "color": "#6366f1" }
+    ],
+    "importers": [
+      { "name": "شركة الرياض للتجارة", "value": 28, "percentage": 28, "color": "#0ea5e9" },
+      { "name": "مؤسسة جدة للاستيراد", "value": 22, "percentage": 22, "color": "#8b5cf6" },
+      { "name": "شركة الشرق للمواد الغذائية", "value": 18, "percentage": 18, "color": "#10b981" },
+      { "name": "شركة الخليج للتوزيع", "value": 15, "percentage": 15, "color": "#f59e0b" },
+      { "name": "آخرون", "value": 17, "percentage": 17, "color": "#6366f1" }
+    ],
+    "importersOthers": [
+      { "name": "شركة النور للتجارة", "value": 6, "percentage": 6, "color": "#ec4899" },
+      { "name": "مؤسسة الأمل", "value": 4, "percentage": 4, "color": "#14b8a6" },
+      { "name": "شركة الفجر الجديد", "value": 3, "percentage": 3, "color": "#f97316" },
+      { "name": "مستوردون آخرون", "value": 4, "percentage": 4, "color": "#64748b" }
+    ]
+  }
 }
