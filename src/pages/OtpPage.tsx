@@ -1,19 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { apiClient } from "../lib/axios";
+import { useAuth } from "../context/AuthContext";
 
 interface OtpLocationState {
-  state?: {
-    email?: string;
-  };
+  state?: { email?: string };
 }
 
 const OtpPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation() as OtpLocationState;
+  const { login } = useAuth();
   const email = location.state?.email || "";
 
-  // 6 خانات OTP
-  const [values, setValues] = useState<string[]>(["", "", "", "", "", ""]);
+  const [values, setValues] = useState(["", "", "", "", "", ""]);
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
   const [error, setError] = useState<string | null>(null);
@@ -21,10 +21,7 @@ const OtpPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // لو دخل مباشرة على صفحة OTP بدون إيميل
-    if (!email) {
-      navigate("/login");
-    }
+    if (!email) navigate("/login");
   }, [email, navigate]);
 
   const handleChange = (index: number, value: string) => {
@@ -53,49 +50,38 @@ const OtpPage: React.FC = () => {
 
     const otp = values.join("");
 
-    if (otp.length !== values.length) {
-      setError("الرجاء إدخال رمز التحقق بالكامل.");
+    if (otp.length !== 6) {
+      setError("الرجاء إدخال رمز التحقق بالكامل (6 أرقام).");
       return;
     }
 
     try {
       setIsSubmitting(true);
 
-      const res = await fetch(
-        "http://10.44.148.143:6061/user-management/auth/verify-otp",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            otp,
-          }),
-        }
+      const res = await apiClient.post("/user-management/auth/verify-otp", {
+        email,
+        otp,
+      });
+
+      const data = res.data;
+      console.log("verify-otp response:", data);
+
+      // الباك إند حالياً يرجّع فقط { email, otp }
+      // نولّد توكن وهمي مؤقتاً عشان ProtectedRoute يشتغل
+      const token = data.token ?? `otp-verified-${email}-${Date.now()}`;
+      const userEmail = data.email ?? email;
+
+      login(token, userEmail);
+
+      alert("تم التحقق بنجاح!");
+      navigate("/subscription");
+    } catch (error: any) {
+      console.error("verify-otp error:", error);
+      setServerError(
+        error?.response?.data?.message ||
+        error.message ||
+        "رمز التحقق غير صحيح أو منتهي."
       );
-
-      if (!res.ok) {
-        try {
-          const errorData = await res.json();
-          if (errorData?.message) {
-            throw new Error(errorData.message);
-          }
-        } catch {
-          // تجاهل خطأ الـ JSON
-        }
-        throw new Error("رمز التحقق غير صحيح أو منتهي، الرجاء المحاولة مرة أخرى.");
-      }
-
-      // الرد حسب كلامك:
-      // { "email": "honiazy@elm.sa", "otp": 647704 }
-      // تقدر تقراه لو حاب:
-      // const data = await res.json();
-
-      alert("تم تأكيد الحساب بنجاح!");
-      navigate("/subscription"); // أو "/" حسب ما تحب
-    } catch (err: any) {
-      setServerError(err.message || "حدث خطأ غير متوقع، الرجاء المحاولة لاحقاً.");
     } finally {
       setIsSubmitting(false);
     }
@@ -106,30 +92,27 @@ const OtpPage: React.FC = () => {
     setServerError(null);
 
     try {
-      const res = await fetch(
-        "http://10.44.148.143:6061/user-management/auth/request-otp",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email }),
-        }
+      const res = await apiClient.post("/user-management/auth/request-otp", { email });
+
+      console.log("resend-otp response:", res.data);
+
+      // لو الريسبونس "OTP sent to email"
+      // نقدر نعرضه للمستخدم أو نخليها رسالة عربية:
+      // alert(res.data);
+      alert("تم إعادة إرسال رمز التحقق إلى بريدك الإلكتروني!");
+    } catch (error: any) {
+      console.error("request-otp error:", error);
+      setServerError(
+        error?.response?.data?.message ||
+        error.message ||
+        "تعذر إعادة إرسال رمز التحقق."
       );
-
-      if (!res.ok) {
-        throw new Error("تعذر إعادة إرسال رمز التحقق، الرجاء المحاولة لاحقاً.");
-      }
-
-      alert("تم إعادة إرسال رمز التحقق!");
-    } catch (err: any) {
-      setServerError(err.message || "حدث خطأ غير متوقع، الرجاء المحاولة لاحقاً.");
     }
   };
 
   return (
     <div dir="rtl" className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
         <button
           type="button"
           onClick={() => navigate("/login")}
@@ -146,16 +129,7 @@ const OtpPage: React.FC = () => {
             className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
             style={{ backgroundColor: "#EEF2FF" }}
           >
-            <svg
-              width="32"
-              height="32"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#4F46E5"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" strokeWidth="2">
               <rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect>
               <polyline points="3 7 12 13 21 7"></polyline>
             </svg>
@@ -165,13 +139,11 @@ const OtpPage: React.FC = () => {
             تأكيد البريد الإلكتروني
           </h2>
           <p className="text-sm text-slate-600 mb-1">تم إرسال رمز التحقق إلى</p>
-          <p className="text-sm font-medium text-blue-600">
-            {email || "example@email.com"}
-          </p>
+          <p className="text-sm font-medium text-blue-600">{email}</p>
         </div>
 
         {serverError && (
-          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-3 text-right">
+          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-right">
             {serverError}
           </div>
         )}
@@ -181,6 +153,7 @@ const OtpPage: React.FC = () => {
             <label className="block text-sm font-medium text-slate-700 mb-3 text-center">
               أدخل رمز التحقق
             </label>
+
             <div className="flex gap-2 justify-center" dir="ltr">
               {values.map((val, idx) => (
                 <input
@@ -191,11 +164,12 @@ const OtpPage: React.FC = () => {
                   value={val}
                   onChange={(e) => handleChange(idx, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(idx, e)}
-                  className="w-10 h-12 text-center text-lg font-semibold border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-12 h-12 text-center text-xl font-semibold border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600"
                   required
                 />
               ))}
             </div>
+
             {error && (
               <p className="mt-2 text-xs text-red-500 text-center">{error}</p>
             )}
@@ -204,7 +178,7 @@ const OtpPage: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition shadow-lg w-full justify-center disabled:opacity-60"
           >
             {isSubmitting ? "جاري التحقق..." : "تأكيد الحساب"}
           </button>

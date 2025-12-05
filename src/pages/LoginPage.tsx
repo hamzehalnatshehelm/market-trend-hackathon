@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "../components/ui/input";
 import { Checkbox } from "../components/ui/checkbox";
+import { apiClient } from "../lib/axios";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -38,43 +39,37 @@ const LoginPage: React.FC = () => {
     try {
       setIsSubmitting(true);
 
-      const res = await fetch(
-        "http://10.44.148.143:6061/user-management/auth/request-otp",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email
-          }),
-        }
-      );
+      const res = await apiClient.post("/user-management/auth/request-otp", {
+        email,
+        rememberMe,
+      });
 
-      if (!res.ok) {
-        try {
-          const errorData = await res.json();
-          if (errorData?.message) {
-            throw new Error(errorData.message);
-          }
-        } catch {
-          // تجاهل خطأ الـ JSON
-        }
-        throw new Error("تعذر إرسال رمز التحقق، الرجاء المحاولة لاحقاً.");
-      }
+      // هنا الريسبونس عندك حسب كلامك: "OTP sent to email"
+      console.log("request-otp response:", res.data);
 
+      // تقدر لو حاب تعرض نفس رسالة السيرفر:
+      // alert(res.data);
+      // أو تخليها عربية ثابتة:
+      alert("تم إرسال رمز التحقق إلى بريدك الإلكتروني");
 
       navigate("/otp", { state: { email } });
-    } catch (err: any) {
-      setServerError(err.message || "حدث خطأ غير متوقع، الرجاء المحاولة لاحقاً.");
+    } catch (error: any) {
+      console.error("request-otp error:", error);
+      setServerError(
+        error?.response?.data?.message ||
+        error.message ||
+        "تعذر إرسال رمز التحقق، الرجاء المحاولة لاحقاً."
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
+
   return (
     <div dir="rtl" className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
+
         <button
           type="button"
           onClick={() => navigate("/home")}
@@ -92,21 +87,18 @@ const LoginPage: React.FC = () => {
         </div>
 
         {serverError && (
-          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-3 text-right">
+          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-right">
             {serverError}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="mb-6 space-y-4">
+
           <div>
-            <label
-              className="block text-sm font-medium text-slate-700 mb-2 text-right"
-              htmlFor="email"
-            >
+            <label className="block text-sm font-medium text-slate-700 mb-2 text-right">
               البريد الإلكتروني
             </label>
             <Input
-              id="email"
               type="email"
               placeholder="name@example.com"
               value={email}
@@ -118,11 +110,20 @@ const LoginPage: React.FC = () => {
             )}
           </div>
 
+          <div className="flex items-center justify-between text-sm">
+            <label className="flex items-center gap-2">
+              <Checkbox
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(!!checked)}
+              />
+              <span className="text-slate-700">تذكرني</span>
+            </label>
+          </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg w-full justify-center disabled:opacity-60"
           >
             {isSubmitting ? "جاري الإرسال..." : "إرسال رمز التحقق"}
           </button>
@@ -138,6 +139,7 @@ const LoginPage: React.FC = () => {
             سجل الآن
           </button>
         </p>
+
       </div>
     </div>
   );

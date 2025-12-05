@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "../components/ui/input";
 import { Checkbox } from "../components/ui/checkbox";
+import { apiClient } from "../lib/axios";
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ const RegisterPage: React.FC = () => {
     if (!mobile.trim()) {
       newErrors.mobile = "رقم الجوال مطلوب";
     } else {
-      // تحقق بسيط لرقم سعودي (تقديري، عدله حسب الحاجة)
+      // تحقق بسيط لرقم سعودي (تقديري، عدّله حسب الحاجة)
       const saMobileRegex = /^(?:\+?966|0)?5[0-9]{8}$/;
       if (!saMobileRegex.test(mobile.replace(/\s+/g, ""))) {
         newErrors.mobile = "الرجاء إدخال رقم جوال صحيح";
@@ -68,40 +69,22 @@ const RegisterPage: React.FC = () => {
     try {
       setIsSubmitting(true);
 
-      // غيّر الرابط حسب API الباك إند عندك
-      const res = await fetch("https://api.example.com/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fullName,
-          mobile,
-          email,
-          // ممكن ترسل termsAccepted لو الباك إند يحتاجه
-          termsAccepted,
-        }),
+      // غيّر المسار حسب الباك إند عندك لو مختلف
+      await apiClient.post("/user-management/auth/register", {
+        fullName,
+        mobile,
+        email,
+        termsAccepted,
       });
 
-      if (!res.ok) {
-        try {
-          const errorData = await res.json();
-          if (errorData?.message) {
-            throw new Error(errorData.message);
-          }
-        } catch {
-          // تجاهل أخطاء الـ parsing
-        }
-        throw new Error("تعذر إنشاء الحساب، الرجاء المحاولة لاحقاً.");
-      }
-
-      // لو فيه بيانات تحتاجها من الريسبونس:
-      // const data = await res.json();
-
-      // بعد نجاح التسجيل وإرسال OTP ننتقل لصفحة التحقق
+      // بعد نجاح التسجيل (وإرسال OTP من الباك إند) نروح لصفحة OTP
       navigate("/otp", { state: { email } });
     } catch (err: any) {
-      setServerError(err.message || "حدث خطأ غير متوقع، الرجاء المحاولة لاحقاً.");
+      setServerError(
+        err?.response?.data?.message ||
+          err.message ||
+          "تعذر إنشاء الحساب، الرجاء المحاولة لاحقاً."
+      );
     } finally {
       setIsSubmitting(false);
     }
