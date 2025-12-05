@@ -3,9 +3,18 @@ import { ArrowUpRight, MessageCircle } from 'lucide-react';
 
 interface HeaderProps {
   onAskClick: () => void;
+  // حالة المستخدم
+  isAuthenticated: boolean;
+  isSubscribed: boolean; // true = دافع ومشترك
 }
 
-export default function Header({ onAskClick }: HeaderProps) {
+export default function Header({ onAskClick, isAuthenticated, isSubscribed }: HeaderProps) {
+  // هل نظهر زر "اشترك الآن"؟
+  const showSubscribeButton = !isAuthenticated || (isAuthenticated && !isSubscribed);
+
+  // إلى أين يذهب زر "اشترك الآن"؟
+  const subscribeTarget = !isAuthenticated ? '/login' : '/pricing'; // غيّر /pricing لمسار صفحة الاشتراك عندك
+
   return (
     <header className="mb-8">
       <div className="flex items-center justify-between mb-4 bg-white rounded-2xl shadow-lg p-6">
@@ -22,14 +31,6 @@ export default function Header({ onAskClick }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* <Link
-            to="/subscription"
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
-          >
-            <span className="btn-text">
-              اشترك الآن
-            </span>
-          </Link> */}
           <button
             onClick={onAskClick}
             className="flex items-center gap-2 px-6 py-3 cursor-pointer rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all hover:shadow-xl border border-slate-300 bg-white"
@@ -38,12 +39,14 @@ export default function Header({ onAskClick }: HeaderProps) {
             <span>إسالني</span>
           </button>
 
-          <Link
-            to="/login"
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
-          >
-            <span className="btn-text">اشترك الآن</span>
-          </Link>
+          {showSubscribeButton && (
+            <Link
+              to={subscribeTarget}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
+            >
+              <span className="btn-text">اشترك الآن</span>
+            </Link>
+          )}
         </div>
       </div>
     </header>
