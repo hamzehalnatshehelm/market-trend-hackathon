@@ -7,8 +7,8 @@ interface SuggestedQueriesProps {
 }
 
 export function SuggestedQueries({ onAction, currentQuery }: SuggestedQueriesProps) {
-  const isSpecificPortSelected = currentQuery.port !== 'جميع المنافذ' && 
-                                  !currentQuery.port.includes('جميع المنافذ');
+  const isSpecificPortSelected = currentQuery.port !== 'جميع المنافذ' &&
+    !currentQuery.port.includes('جميع المنافذ');
 
   // Get metric label based on current query
   const getMetricLabel = () => {
@@ -35,33 +35,33 @@ export function SuggestedQueries({ onAction, currentQuery }: SuggestedQueriesPro
     action: 'monthly' | 'tariff' | 'weight' | 'ports' | 'companies';
     hideCondition?: boolean;
   }> = [
-    {
-      title: `هل تحب أن أزودك برسم بياني يرصد التغير في ${getMetricLabel()} كل شهر؟`,
-      description: 'عرض تفصيلي للتغيرات الشهرية مع مؤشرات النمو',
-      action: 'monthly'
-    },
-    {
-      title: 'هل تريد تصنيف النتائج بناءً على التعرفة الجمركية؟',
-      description: 'تحليل مفصل حسب رموز التعرفة الجمركية الدولية',
-      action: 'tariff'
-    },
-    {
-      title: `هل تريد البحث بدلالة ${currentQuery.metric === 'عدد الوحدات' ? 'الكيلو جرامات عوضاً عن عدد الوحدات' : currentQuery.metric === 'الوزن الإجمالي' ? 'عدد الوحدات عوضاً عن الوزن' : 'عدد الوحدات عوضاً عن عدد الشحنات'} ثم مقارنتها مع السنة الماضية؟`,
-      description: 'مقارنة المقاييس المختلفة مع السنة الماضية',
-      action: 'weight'
-    },
-    {
-      title: 'هل تريد معرفة أي من المنافذ كان الأكثر استخداماً؟',
-      description: `ترتيب المنافذ الجمركية حسب حجم ${getDirectionLabel()}`,
-      action: 'ports',
-      hideCondition: isSpecificPortSelected
-    },
-    {
-      title: `هل ترغب بالحصول على قائمة بشركات التخليص الجمركي على هذا المنفذ مرتبة بحسب حجم ${getDirectionLabel()}؟`,
-      description: `شركات التخليص مع بيانات الاتصال مرتبة حسب حجم ${getDirectionLabel()}`,
-      action: 'companies'
-    }
-  ];
+      {
+        title: `هل تحب أن أزودك برسم بياني يرصد التغير في ${getMetricLabel()} كل شهر؟`,
+        description: 'عرض تفصيلي للتغيرات الشهرية مع مؤشرات النمو',
+        action: 'monthly'
+      },
+      {
+        title: 'هل تريد تصنيف النتائج بناءً على التعرفة الجمركية؟',
+        description: 'تحليل مفصل حسب رموز التعرفة الجمركية الدولية',
+        action: 'tariff'
+      },
+      {
+        title: `هل تريد البحث بدلالة ${currentQuery.metric === 'عدد الوحدات' ? 'الكيلو جرامات عوضاً عن عدد الوحدات' : currentQuery.metric === 'الوزن الإجمالي' ? 'عدد الوحدات عوضاً عن الوزن' : 'عدد الوحدات عوضاً عن عدد الشحنات'} ثم مقارنتها مع السنة الماضية؟`,
+        description: 'مقارنة المقاييس المختلفة مع السنة الماضية',
+        action: 'weight'
+      },
+      {
+        title: 'هل تريد معرفة أي من المنافذ كان الأكثر استخداماً؟',
+        description: `ترتيب المنافذ الجمركية حسب حجم ${getDirectionLabel()}`,
+        action: 'ports',
+        hideCondition: isSpecificPortSelected
+      },
+      {
+        title: `هل ترغب بالحصول على قائمة بشركات التخليص الجمركي على هذا المنفذ مرتبة بحسب حجم ${getDirectionLabel()}؟`,
+        description: `شركات التخليص مع بيانات الاتصال مرتبة حسب حجم ${getDirectionLabel()}`,
+        action: 'companies'
+      }
+    ];
 
   const visibleQueries = suggestedQueries.filter(q => !q.hideCondition);
 
@@ -72,8 +72,8 @@ export function SuggestedQueries({ onAction, currentQuery }: SuggestedQueriesPro
           <Lightbulb className="w-5 h-5 text-yellow-600" />
         </div>
         <div>
-          <h2 className="text-slate-900">استعلامات مقترحة</h2>
-          <p className="text-slate-600">اختر أحد الاستعلامات للحصول على رؤى تحليلية أعمق</p>
+          <h2 className="text-xl font-semibold text-slate-900">استعلامات مقترحة</h2>
+          <p className="text-sm text-slate-600">اختر أحد الاستعلامات للحصول على رؤى تحليلية أعمق</p>
         </div>
       </div>
 

@@ -75,7 +75,7 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6">
-      <h2 className="text-slate-900 mb-6">بناء الاستعلام</h2>
+      <h2  className="text-xl font-semibold text-slate-900 mb-6">بناء الاستعلام</h2>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

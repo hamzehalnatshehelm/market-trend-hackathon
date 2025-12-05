@@ -15,7 +15,7 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
   const [showImportersBreakdown, setShowImportersBreakdown] = useState(false);
   const [showHintMessage, setShowHintMessage] = useState(true);
   const [timeGrouping, setTimeGrouping] = useState<'month' | 'quarter' | 'half' | 'year' | 'decade'>('month');
-  
+
   useEffect(() => {
     if (showHintMessage) {
       const timer = setTimeout(() => setShowHintMessage(false), 5000);
@@ -27,11 +27,11 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
   useEffect(() => {
     setShowHintMessage(true);
   }, [query]);
-  
+
   // Group data based on time grouping selection
   const getGroupedData = () => {
     if (timeGrouping === 'month') return data;
-    
+
     // For demo purposes, create aggregated data
     if (timeGrouping === 'quarter') {
       return [
@@ -50,12 +50,12 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
         { name: '2025', value: data.reduce((sum, d) => sum + d.value, 0) },
       ];
     }
-    
+
     return data;
   };
 
   const displayData = getGroupedData();
-  
+
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const average = Math.round(total / data.length);
   const max = Math.max(...data.map(item => item.value));
@@ -123,11 +123,11 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
     return (
-      <text 
-        x={x} 
-        y={y} 
-        fill="#334155" 
-        textAnchor={x > cx ? 'start' : 'end'} 
+      <text
+        x={x}
+        y={y}
+        fill="#334155"
+        textAnchor={x > cx ? 'start' : 'end'}
         dominantBaseline="central"
         style={{ fontSize: '14px', fontWeight: '600' }}
       >
@@ -140,8 +140,8 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
     <div className="bg-white rounded-2xl shadow-lg p-6">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h2 className="text-slate-900 mb-2">نتائج الاستعلام</h2>
-          <p className="text-slate-600">
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">نتائج الاستعلام</h2>
+          <p className="text-sm text-slate-600">
             {query.metric} في {query.sector} - {query.productCategory} ({query.location} من {query.period.from} إلى {query.period.to})
           </p>
           {showMonthClickHint && (
@@ -151,7 +151,7 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
             </div>
           )}
         </div>
-        <button 
+        <button
           onClick={handleExport}
           className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
         >
@@ -201,18 +201,17 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
               <button
                 key={option.value}
                 onClick={() => setTimeGrouping(option.value as any)}
-                className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
-                  timeGrouping === option.value
+                className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${timeGrouping === option.value
                     ? 'bg-blue-600 text-white'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+                  }`}
               >
                 {option.label}
               </button>
             ))}
           </div>
         </div>
-        
+
         {showHintMessage && (
           <div className="flex items-center gap-2 text-blue-600 bg-blue-50 px-3 py-2 rounded-lg w-fit">
             <Info className="w-4 h-4" />
@@ -225,32 +224,32 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={displayData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis 
-              dataKey="name" 
+            <XAxis
+              dataKey="name"
               stroke="#64748b"
               style={{ fontSize: '14px' }}
             />
-            <YAxis 
+            <YAxis
               stroke="#64748b"
               style={{ fontSize: '14px' }}
               tickFormatter={(value) => value.toLocaleString('ar-SA')}
             />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#fff', 
+            <Tooltip
+              contentStyle={{
+                backgroundColor: '#fff',
                 border: '1px solid #e2e8f0',
                 borderRadius: '8px',
                 direction: 'rtl'
               }}
               formatter={(value: number) => [value.toLocaleString('ar-SA'), query.metric]}
             />
-            <Legend 
+            <Legend
               wrapperStyle={{ direction: 'rtl' }}
               formatter={() => query.metric}
             />
-            <Bar 
-              dataKey="value" 
-              fill="#3b82f6" 
+            <Bar
+              dataKey="value"
+              fill="#3b82f6"
               radius={[8, 8, 0, 0]}
               name={query.metric}
               onClick={handleBarClick}
@@ -267,8 +266,8 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
             <Building2 className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h3 className="text-slate-900">مساهمة شركات التخليص الجمركي</h3>
-            <p className="text-slate-600">
+            <h3 className="text-lg font-semibold text-slate-900">مساهمة شركات التخليص الجمركي</h3>
+            <p className="text-sm text-slate-600">
               {query.location === 'استيراد' ? 'توزيع الشركات حسب حجم الاستيراد للفترة كاملة' : 'توزيع الشركات حسب حجم التصدير للفترة كاملة'}
             </p>
           </div>
@@ -293,9 +292,9 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#fff', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#fff',
                       border: '1px solid #e2e8f0',
                       borderRadius: '8px',
                       direction: 'rtl'
@@ -316,14 +315,13 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
                       setShowOthersBreakdown(!showOthersBreakdown);
                     }
                   }}
-                  className={`w-full bg-slate-50 rounded-lg p-4 border border-slate-200 ${
-                    company.name === 'آخرون' ? 'hover:border-blue-400 hover:bg-blue-50 cursor-pointer' : ''
-                  } transition-all`}
+                  className={`w-full bg-slate-50 rounded-lg p-4 border border-slate-200 ${company.name === 'آخرون' ? 'hover:border-blue-400 hover:bg-blue-50 cursor-pointer' : ''
+                    } transition-all`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div 
-                        className="w-4 h-4 rounded-full" 
+                      <div
+                        className="w-4 h-4 rounded-full"
                         style={{ backgroundColor: company.color }}
                       />
                       <span className="text-slate-900">{company.name}</span>
@@ -331,12 +329,11 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
                     <div className="flex items-center gap-2">
                       <span className="text-slate-900">{company.percentage}%</span>
                       {company.name === 'آخرون' && (
-                        <svg 
-                          className={`w-4 h-4 text-slate-400 transition-transform ${
-                            showOthersBreakdown ? 'rotate-180' : ''
-                          }`}
-                          fill="none" 
-                          viewBox="0 0 24 24" 
+                        <svg
+                          className={`w-4 h-4 text-slate-400 transition-transform ${showOthersBreakdown ? 'rotate-180' : ''
+                            }`}
+                          fill="none"
+                          viewBox="0 0 24 24"
                           stroke="currentColor"
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -353,8 +350,8 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
                     {othersBreakdown.map((otherCompany, idx) => (
                       <div key={idx} className="flex items-center justify-between bg-white rounded-lg p-3">
                         <div className="flex items-center gap-2">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
+                          <div
+                            className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: otherCompany.color }}
                           />
                           <span className="text-slate-700">{otherCompany.name}</span>
@@ -377,10 +374,10 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
             <Users className="w-5 h-5 text-emerald-600" />
           </div>
           <div>
-            <h3 className="text-slate-900">
+            <h3 className="text-lg font-semibold text-slate-900">
               {query.location === 'استيراد' ? 'حجم استيراد المستوردين الحاليين' : 'حجم تصدير المصدرين الحاليين'}
             </h3>
-            <p className="text-slate-600">
+            <p className="text-sm text-slate-600">
               {query.location === 'استيراد' ? 'توزيع المستوردين حسب حجم الاستيراد للفترة كاملة' : 'توزيع المصدرين حسب حجم التصدير للفترة كاملة'}
             </p>
           </div>
@@ -405,9 +402,9 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#fff', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#fff',
                       border: '1px solid #e2e8f0',
                       borderRadius: '8px',
                       direction: 'rtl'
@@ -428,14 +425,13 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
                       setShowImportersBreakdown(!showImportersBreakdown);
                     }
                   }}
-                  className={`w-full bg-slate-50 rounded-lg p-4 border border-slate-200 ${
-                    company.name === 'آخرون' ? 'hover:border-blue-400 hover:bg-blue-50 cursor-pointer' : ''
-                  } transition-all`}
+                  className={`w-full bg-slate-50 rounded-lg p-4 border border-slate-200 ${company.name === 'آخرون' ? 'hover:border-blue-400 hover:bg-blue-50 cursor-pointer' : ''
+                    } transition-all`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div 
-                        className="w-4 h-4 rounded-full" 
+                      <div
+                        className="w-4 h-4 rounded-full"
                         style={{ backgroundColor: company.color }}
                       />
                       <span className="text-slate-900">{company.name}</span>
@@ -443,12 +439,11 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
                     <div className="flex items-center gap-2">
                       <span className="text-slate-900">{company.percentage}%</span>
                       {company.name === 'آخرون' && (
-                        <svg 
-                          className={`w-4 h-4 text-slate-400 transition-transform ${
-                            showImportersBreakdown ? 'rotate-180' : ''
-                          }`}
-                          fill="none" 
-                          viewBox="0 0 24 24" 
+                        <svg
+                          className={`w-4 h-4 text-slate-400 transition-transform ${showImportersBreakdown ? 'rotate-180' : ''
+                            }`}
+                          fill="none"
+                          viewBox="0 0 24 24"
                           stroke="currentColor"
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -465,8 +460,8 @@ export function ChartDisplay({ data, query, onMonthClick, showMonthClickHint }: 
                     {importersOthersBreakdown.map((otherCompany, idx) => (
                       <div key={idx} className="flex items-center justify-between bg-white rounded-lg p-3">
                         <div className="flex items-center gap-2">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
+                          <div
+                            className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: otherCompany.color }}
                           />
                           <span className="text-slate-700">{otherCompany.name}</span>

@@ -155,7 +155,7 @@ export default function ImportExportDashboard() {
         <header className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-slate-900 mb-2">استعلام حجم الاستيراد أو التصدير من منتجـ(ات) معينة</h1>
+              <h1 className="text-2xl font-semibold text-slate-900 mb-2">استعلام حجم الاستيراد أو التصدير من منتجـ(ات) معينة</h1>
               <p className="text-slate-600">استعلامات متعددة الأبعاد مع تصور بياني</p>
             </div>
             <div className="flex items-center gap-4">

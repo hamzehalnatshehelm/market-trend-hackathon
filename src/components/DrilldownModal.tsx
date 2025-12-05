@@ -247,7 +247,7 @@ export function DrilldownModal({ month, query, onClose }: DrilldownModalProps) {
           <div className="bg-slate-50 rounded-xl p-6">
             <div className="flex items-center gap-3 mb-4">
               <Users className="w-5 h-5 text-emerald-600" />
-              <h3 className="text-slate-900">
+              <h3 className="text-lg font-semibold text-slate-900">
                 {query.location === 'استيراد' ? 'حجم استيراد المستوردين الحاليين' : 'حجم تصدير المصدرين الحاليين'}
               </h3>
             </div>
