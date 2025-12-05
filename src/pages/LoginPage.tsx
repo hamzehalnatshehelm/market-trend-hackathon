@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "../components/ui/input";
 import { Checkbox } from "../components/ui/checkbox";
 import { apiClient } from "../lib/axios";
+import { useToast } from "../components/ui/use-toast";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +14,9 @@ const LoginPage: React.FC = () => {
   const [errors, setErrors] = useState<{ email?: string }>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { toast } = useToast();
+
 
   const validate = () => {
     const newErrors: { email?: string } = {};
@@ -50,7 +54,10 @@ const LoginPage: React.FC = () => {
       // تقدر لو حاب تعرض نفس رسالة السيرفر:
       // alert(res.data);
       // أو تخليها عربية ثابتة:
-      alert("تم إرسال رمز التحقق إلى بريدك الإلكتروني");
+      toast({
+        title: "✨ تم الإرسال بنجاح",
+        description: "تم إرسال رمز التحقق إلى بريدك الإلكتروني",
+      });
 
       navigate("/otp", { state: { email } });
     } catch (error: any) {

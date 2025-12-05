@@ -70,7 +70,7 @@ const RegisterPage: React.FC = () => {
       setIsSubmitting(true);
 
       // غيّر المسار حسب الباك إند عندك لو مختلف
-      await apiClient.post("/user-management/auth/register", {
+      await apiClient.post("/user-management/api/register", {
         fullName,
         mobile,
         email,
