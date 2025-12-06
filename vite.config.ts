@@ -56,9 +56,10 @@ export default defineConfig({
     port: 3000,
     open: true,
     proxy: {
+      //http://10.44.148.143:6061
       // أي request يبدأ بـ /user-management يروح للسيرفر 6061
       '/user-management': {
-        target: 'http://10.44.148.143:6061',
+        target: 'http://10.41.146.92:6062',
         changeOrigin: true,
         secure: false,
       },

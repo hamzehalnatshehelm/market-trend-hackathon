@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, Info } from 'lucide-react';
+import axios from 'axios';
 import { QueryData } from '../pages/ImportExportDashboard';
 import { TariffTreeSelect } from './TariffTreeSelect';
 
@@ -8,91 +9,84 @@ interface QueryBuilderProps {
   initialQuery: QueryData;
 }
 
-interface QueryOptions {
-  sectors?: string[];
-  metrics?: string[];
-  directions?: string[];
-  productCategories?: string[];
-  ports?: string[];
-  periods?: {
-    years: number[];
-    months: string[];
-  };
-}
-
 export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
   const [query, setQuery] = useState<QueryData>(initialQuery);
   const [sectorSearchQuery, setSectorSearchQuery] = useState('');
   const [showSectorDropdown, setShowSectorDropdown] = useState(false);
 
-  const [options, setOptions] = useState<QueryOptions | null>(null);
-  const [optionsLoading, setOptionsLoading] = useState(false);
-  const [optionsError, setOptionsError] = useState<string | null>(null);
+  // ✅ حالة تحميل/خطأ وخيارات القطاعات (من /market-trends/v1/section)
+  const [sectors, setSectors] = useState<string[]>([]);
+  const [sectorsLoading, setSectorsLoading] = useState(false);
+  const [sectorsError, setSectorsError] = useState<string | null>(null);
+
+  // ممكن تضيف قيمة افتراضية لاحقًا لو حبيت
+  const FALLBACK_SECTORS: string[] = [];
+
+  const FALLBACK_METRICS: string[] = ['عدد الوحدات', 'الوزن الإجمالي', 'عدد الشحنات'];
+  const FALLBACK_DIRECTIONS: string[] = ['استيراد', 'تصدير'];
+
+  const metrics = FALLBACK_METRICS;
+  const directions = FALLBACK_DIRECTIONS;
 
   // لو initialQuery تغيّر من الأب نحدث الـ state
   useEffect(() => {
     setQuery(initialQuery);
   }, [initialQuery]);
 
-  // 🔹 Fallbacks لو الـ API فشل أو لسه ما رجع
-  const FALLBACK_SECTORS: string[] = [
-    'جميع القطاعات',
-    'استيراد مواد التنظيف',
-    'استيراد المواد الغذائية',
-    'استيراد الإلكترونيات',
-    'استيراد مواد البناء',
-    'استيراد المنسوجات',
-  ];
-
-  const FALLBACK_METRICS: string[] = [
-    'عدد الوحدات',
-    'الوزن الإجمالي',
-    'عدد الشحنات',
-  ];
-
-  const FALLBACK_DIRECTIONS: string[] = ['استيراد', 'تصدير'];
-
-  // 🔄 تحميل خيارات الاستعلام من الـ API
+  // 🔄 تحميل القطاعات من API /market-trends/v1/section باستخدام Axios
   useEffect(() => {
-    const fetchOptions = async () => {
-      setOptionsLoading(true);
-      setOptionsError(null);
+    const fetchSectors = async () => {
+      setSectorsLoading(true);
+      setSectorsError(null);
 
       try {
-        const res = await fetch('http://localhost:4000/queryOptions');
-        if (!res.ok) {
-          throw new Error('Failed to load query options');
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/market-trends/v1/section`
+        );
+
+        const data = res.data as Array<{
+          sectionCd: string;
+          sectionDescAr: string;
+          sectionDescEn: string;
+        }>;
+
+        // مثال عرض: "16 - آلات وأجهزة ..."
+        let list: string[] = [];
+
+        if (Array.isArray(data)) {
+          list = data.map(
+            (item) => `${item.sectionCd} - ${item.sectionDescAr ?? item.sectionDescEn ?? ''}`
+          );
+
+          // (اختياري) ترتيب حسب الكود
+          list.sort((a, b) => a.localeCompare(b, 'ar'));
         }
-        const payload = (await res.json()) as QueryOptions;
-        setOptions(payload);
+
+        if (!list.length && FALLBACK_SECTORS.length) {
+          setSectors(FALLBACK_SECTORS);
+        } else {
+          setSectors(list);
+        }
       } catch (error) {
-        console.error('Error loading query options:', error);
-        setOptionsError('تعذر تحميل خيارات الاستعلام، تم استخدام خيارات افتراضية.');
+        console.error('Error loading sectors:', error);
+        setSectorsError('تعذر تحميل القطاعات من النظام.');
+        setSectors(FALLBACK_SECTORS);
       } finally {
-        setOptionsLoading(false);
+        setSectorsLoading(false);
       }
     };
 
-    fetchOptions();
+    fetchSectors();
   }, []);
 
-  // 👇 نختار إما بيانات الـ API أو الـ fallback
-  const sectors = options?.sectors && options.sectors.length > 0
-    ? options.sectors
-    : FALLBACK_SECTORS;
-
-  const metrics = options?.metrics && options.metrics.length > 0
-    ? options.metrics
-    : FALLBACK_METRICS;
-
-  const directions = options?.directions && options.directions.length > 0
-    ? options.directions
-    : FALLBACK_DIRECTIONS;
+  const filteredSectors = sectors.filter((sector) =>
+    sector.toLowerCase().includes(sectorSearchQuery.toLowerCase())
+  );
 
   // نفس تركيب المنافذ القديم (مجمعة)
   const ports = {
     'جميع المنافذ': [],
-    'البحرية': [
+    البحرية: [
       'جميع المنافذ البحرية',
       'ميناء جدة الإسلامي',
       'ميناء الملك عبدالعزيز',
@@ -100,7 +94,7 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
       'ميناء الجبيل',
       'ميناء ينبع',
     ],
-    'البرية': [
+    البرية: [
       'جميع المنافذ البرية',
       'منفذ القريات',
       'منفذ الحديثة',
@@ -108,7 +102,7 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
       'منفذ الربع الخالي',
       'منفذ جديدة عرعر',
     ],
-    'الجوية': [
+    الجوية: [
       'جميع المنافذ الجوية',
       'مطار الملك عبدالعزيز الدولي - جدة',
       'مطار الملك خالد الدولي - الرياض',
@@ -116,10 +110,6 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
       'مطار الأمير محمد بن عبدالعزيز - المدينة المنورة',
     ],
   };
-
-  const filteredSectors = sectors.filter((sector) =>
-    sector.toLowerCase().includes(sectorSearchQuery.toLowerCase())
-  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,15 +120,15 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
     <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-xl font-semibold text-slate-900">بناء الاستعلام</h2>
-        {optionsLoading && (
+        {sectorsLoading && (
           <span className="text-xs text-slate-500">
-            جاري تحميل خيارات القطاعات والمقاييس...
+            جاري تحميل القطاعات من النظام...
           </span>
         )}
       </div>
-      {optionsError && (
+      {sectorsError && (
         <p className="text-xs text-amber-600 mb-4">
-          {optionsError}
+          {sectorsError}
         </p>
       )}
 
@@ -186,7 +176,7 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
             )}
           </div>
 
-          {/* التعرفة (TariffTreeSelect كما هو) */}
+          {/* التعرفة (TariffTreeSelect المتصل بالـ API /chapters/sections/16) */}
           <div>
             <label className="block text-slate-700 mb-2">التعرفة</label>
             <TariffTreeSelect
@@ -194,16 +184,17 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
                 Array.isArray(query.productCategory)
                   ? (query.productCategory as unknown as string[])
                   : query.productCategory && query.productCategory !== 'اختر التعرفة'
-                    ? query.productCategory.split(', ').filter(Boolean)
+                    ? query.productCategory.split(',').map((s) => s.trim()).filter(Boolean)
                     : []
               }
               onChange={(items) => {
+                // نخزن الـ IDs داخل productCategory كسلسلة
                 const newValue =
                   items.length === 0
                     ? 'اختر التعرفة'
-                    : items.length === 1
-                      ? items[0]
-                      : items.join(', ');
+                    : items.join(','); // مثال: "8401.10,8401.20"
+
+                console.log('QueryBuilder productCategory =', newValue);
                 setQuery({ ...query, productCategory: newValue });
               }}
               sector={query.sector}
