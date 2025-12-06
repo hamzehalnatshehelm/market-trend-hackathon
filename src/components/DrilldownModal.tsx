@@ -108,9 +108,9 @@ export function DrilldownModal({ month, query, onClose }: DrilldownModalProps) {
         );
       } catch (error) {
         console.error('Error loading company charts (drilldown):', error);
-        setCompaniesError(
-          'تعذر تحميل بيانات شركات التخليص والمستوردين، تم استخدام بيانات افتراضية.'
-        );
+        // setCompaniesError(
+        //   'تعذر تحميل بيانات شركات التخليص والمستوردين، تم استخدام بيانات افتراضية.'
+        // );
         setCompanyData(FALLBACK_COMPANY_CHARTS.clearanceCompanies);
         setOthersBreakdown(FALLBACK_COMPANY_CHARTS.clearanceOthers);
         setImporterData(FALLBACK_COMPANY_CHARTS.importers);

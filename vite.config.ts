@@ -68,8 +68,8 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
-      '/payment': {
-        target: 'http://10.41.146.92:6060',
+      '/payment/': {
+        target: 'http://10.41.146.92:6060/',
         changeOrigin: true,
         secure: false,
       },

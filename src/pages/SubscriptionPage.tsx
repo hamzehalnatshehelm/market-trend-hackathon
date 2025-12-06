@@ -54,19 +54,50 @@ const SubscriptionPage: React.FC = () => {
     try {
       setLoadingPlan(plan);
 
+      // ✅ نفس الـ body اللي طلبته، مع ربط subscriptionId من الخطة المختارة
       const payload = {
-        name: "Hamzeh Alnatsheh",
-        email: "hamzeh.alnatsheh@gmail.com",
-        mobile: "+966542874858",
-        subscriptionId: plansConfig[plan].subscriptionId,
+        customerId: "5938472051",
+        customerEnFullName: "Ahmed Mohammed Alqahtani",
+        customerArFullName: "أحمد محمد القحطاني",
+        identityType: "700",
+        identityTypeValue: "7001395784",
+        nationalAddress: {
+          street: "اوس بن عوف",
+          buildingNumber: "4444",
+          additionalNumber: "5430",
+          district: "العقيق",
+          city: "محافظة الرياض",
+          postalCode: "23323",
+          country: "SA",
+        },
+        mobileNumber: "9665437347628",
+        email: "ahmed.alqahtani@example.com",
+        customerNIN: "1029384756",
+        customerDescription: "Test customer for development",
+        customerVatNumber: "777877444457558",
+        isRealTime: 1,
+        expiryPeriod: 24,
+        subscriptions: [
+          {
+            subscriptionId: plansConfig[plan].subscriptionId, // ← ديناميكي حسب الباقة
+            serviceId: "market-trends-inquiry",
+            description: "Import & Export analytics service",
+            startDate: "2024-12-01",
+            endDate: "2026-12-01",
+            AmountWithoutVat: 10000.0,
+            UnitPrice: 5000.0,
+            volume: 2,
+            active: true,
+          },
+        ],
       };
 
       const res = await axios.post(
         `/payment/api/payment/create-invoice`,
         payload
       );
-
-      const paymentUrl = res.data?.result?.paymentUrl;
+      console.log("Subscription response:", res.data);
+      const paymentUrl = res.data.body.data?.paymentUrl;
 
       if (!paymentUrl) {
         throw new Error("Payment URL not found in response");

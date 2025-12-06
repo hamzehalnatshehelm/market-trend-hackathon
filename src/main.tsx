@@ -1,12 +1,20 @@
+// src/main.tsx (أو src/index.tsx)
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+
 import App from "./App";
 import "./index.css";
-import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./components/ui/use-toast";
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+const rootElement = document.getElementById("root");
+
+if (!rootElement) {
+  throw new Error("Root element with id 'root' not found");
+}
+
+ReactDOM.createRoot(rootElement as HTMLElement).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>

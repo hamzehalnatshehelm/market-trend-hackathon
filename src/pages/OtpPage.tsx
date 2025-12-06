@@ -105,7 +105,7 @@ const OtpPage: React.FC = () => {
         });
 
         // 4️⃣ نتقل للخطوة التالية
-        navigate("/login");
+       navigate("/subscription");
       }
     } catch (error: any) {
       console.error("verify-otp error:", error);
