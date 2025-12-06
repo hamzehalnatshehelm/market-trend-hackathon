@@ -9,6 +9,7 @@ import OtpPage from "./pages/OtpPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PaymentFailedPage from "./pages/PaymentFailedPage";
+import PaymentPendingPage from "./pages/PaymentPendingPage";
 
 const App: React.FC = () => {
   return (
@@ -22,6 +23,7 @@ const App: React.FC = () => {
         <Route path="/subscription" element={<SubscriptionPage />} />
         <Route path="/payment-success" element={<PaymentSuccessPage />} />
         <Route path="/payment-failed" element={<PaymentFailedPage />} />
+        <Route path="/payment-pending" element={<PaymentPendingPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
