@@ -9,21 +9,48 @@ interface QueryBuilderProps {
   initialQuery: QueryData;
 }
 
+// شكل بيانات المنافذ بعد المابينج
+interface PortTypeGroup {
+  id: number;
+  label: string; // اسم النوع (بحري / بري / جوي / سكة حديدية ...)
+  ports: {
+    code: string; // portCode
+    label: string; // الاسم بالعربي أو الإنجليزي
+  }[];
+}
+
+// 👇 شكل القطاع بعد التعديل: نخزن id و label
+interface SectorOption {
+  id: string;    // sectionCd (مثلاً "03")
+  label: string; // "03 - الأسماك ..."
+}
+
 export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
   const [query, setQuery] = useState<QueryData>(initialQuery);
   const [sectorSearchQuery, setSectorSearchQuery] = useState('');
   const [showSectorDropdown, setShowSectorDropdown] = useState(false);
 
-  // ✅ حالة تحميل/خطأ وخيارات القطاعات (من /market-trends/v1/section)
-  const [sectors, setSectors] = useState<string[]>([]);
+  // ✅ القطاعات
+  const [sectors, setSectors] = useState<SectorOption[]>([]);
   const [sectorsLoading, setSectorsLoading] = useState(false);
   const [sectorsError, setSectorsError] = useState<string | null>(null);
 
-  // ممكن تضيف قيمة افتراضية لاحقًا لو حبيت
-  const FALLBACK_SECTORS: string[] = [];
+  // ✅ المنافذ من /market-trends/v1/port-types
+  const [portTypes, setPortTypes] = useState<PortTypeGroup[]>([]);
+  const [portsLoading, setPortsLoading] = useState(false);
+  const [portsError, setPortsError] = useState<string | null>(null);
 
-  const FALLBACK_METRICS: string[] = ['عدد الوحدات', 'الوزن الإجمالي', 'عدد الشحنات'];
-  const FALLBACK_DIRECTIONS: string[] = ['استيراد', 'تصدير'];
+  const FALLBACK_SECTORS: SectorOption[] = [];
+
+  const FALLBACK_METRICS: { name: string; value: string }[] = [
+    { name: 'عدد الوحدات', value: 'QUANTITY' },
+    { name: 'الوزن الإجمالي', value: 'WEIGHT' },
+  ];
+
+  const FALLBACK_DIRECTIONS: { name: string; value: string }[] = [
+    { name: 'استيراد', value: 'IMP' },
+    { name: 'تصدير', value: 'EXP' },
+  ];
 
   const metrics = FALLBACK_METRICS;
   const directions = FALLBACK_DIRECTIONS;
@@ -33,7 +60,7 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
     setQuery(initialQuery);
   }, [initialQuery]);
 
-  // 🔄 تحميل القطاعات من API /market-trends/v1/section باستخدام Axios
+  // 🔄 تحميل القطاعات من API /market-trends/v1/sections
   useEffect(() => {
     const fetchSectors = async () => {
       setSectorsLoading(true);
@@ -41,25 +68,27 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
 
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/market-trends/v1/section`
+          `${import.meta.env.VITE_API_BASE_URL}/market-trends/v1/sections`
         );
 
-        const data = res.data as Array<{
+        const data = res.data.response as Array<{
           sectionCd: string;
           sectionDescAr: string;
           sectionDescEn: string;
         }>;
 
-        // مثال عرض: "16 - آلات وأجهزة ..."
-        let list: string[] = [];
+        let list: SectorOption[] = [];
 
         if (Array.isArray(data)) {
-          list = data.map(
-            (item) => `${item.sectionCd} - ${item.sectionDescAr ?? item.sectionDescEn ?? ''}`
-          );
+          list = data.map((item) => ({
+            id: item.sectionCd, // 👈 هذا هو الـ sectionId الحقيقي
+            label: `${item.sectionCd} - ${
+              item.sectionDescAr ?? item.sectionDescEn ?? ''
+            }`,
+          }));
 
-          // (اختياري) ترتيب حسب الكود
-          list.sort((a, b) => a.localeCompare(b, 'ar'));
+          // (اختياري) ترتيب حسب النص
+          list.sort((a, b) => a.label.localeCompare(b.label, 'ar'));
         }
 
         if (!list.length && FALLBACK_SECTORS.length) {
@@ -79,36 +108,56 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
     fetchSectors();
   }, []);
 
+  // 🔄 تحميل المنافذ من /market-trends/v1/port-types
+  useEffect(() => {
+    const fetchPorts = async () => {
+      setPortsLoading(true);
+      setPortsError(null);
+
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/market-trends/v1/port-types`
+        );
+
+        const raw = res.data?.response as any[];
+
+        const mapped: PortTypeGroup[] = Array.isArray(raw)
+          ? raw.map((type) => ({
+              id: type.id,
+              label: type.nameAr ?? type.nameEn ?? `نوع منفذ ${type.id}`,
+              ports: Array.isArray(type.ports)
+                ? type.ports.map((p: any) => ({
+                    code: String(p.portCode),
+                    label:
+                      p.codeDescAr ?? p.codeDescEn ?? String(p.portCode),
+                  }))
+                : [],
+            }))
+          : [];
+
+        setPortTypes(mapped);
+      } catch (error) {
+        console.error('Error loading port types:', error);
+        setPortsError('تعذر تحميل المنافذ من النظام.');
+        setPortTypes([]);
+      } finally {
+        setPortsLoading(false);
+      }
+    };
+
+    fetchPorts();
+  }, []);
+
+  // فلترة القطاعات حسب البحث
   const filteredSectors = sectors.filter((sector) =>
-    sector.toLowerCase().includes(sectorSearchQuery.toLowerCase())
+    sector.label.toLowerCase().includes(sectorSearchQuery.toLowerCase())
   );
 
-  // نفس تركيب المنافذ القديم (مجمعة)
-  const ports = {
-    'جميع المنافذ': [],
-    البحرية: [
-      'جميع المنافذ البحرية',
-      'ميناء جدة الإسلامي',
-      'ميناء الملك عبدالعزيز',
-      'ميناء الدمام',
-      'ميناء الجبيل',
-      'ميناء ينبع',
-    ],
-    البرية: [
-      'جميع المنافذ البرية',
-      'منفذ القريات',
-      'منفذ الحديثة',
-      'منفذ البطحاء',
-      'منفذ الربع الخالي',
-      'منفذ جديدة عرعر',
-    ],
-    الجوية: [
-      'جميع المنافذ الجوية',
-      'مطار الملك عبدالعزيز الدولي - جدة',
-      'مطار الملك خالد الدولي - الرياض',
-      'مطار الملك فهد الدولي - الدمام',
-      'مطار الأمير محمد بن عبدالعزيز - المدينة المنورة',
-    ],
+  // دالة تجيب النص المعروض للقطاع من الـ id الموجود في query.sector
+  const getSectorLabelById = (id?: string) => {
+    if (!id) return '';
+    const found = sectors.find((s) => s.id === id);
+    return found?.label ?? id;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -120,16 +169,20 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
     <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-xl font-semibold text-slate-900">بناء الاستعلام</h2>
-        {sectorsLoading && (
+        {(sectorsLoading || portsLoading) && (
           <span className="text-xs text-slate-500">
-            جاري تحميل القطاعات من النظام...
+            {sectorsLoading && 'جاري تحميل القطاعات من النظام...'}
+            {sectorsLoading && portsLoading && ' · '}
+            {portsLoading && 'جاري تحميل المنافذ من النظام...'}
           </span>
         )}
       </div>
+
       {sectorsError && (
-        <p className="text-xs text-amber-600 mb-4">
-          {sectorsError}
-        </p>
+        <p className="text-xs text-amber-600 mb-1">{sectorsError}</p>
+      )}
+      {portsError && (
+        <p className="text-xs text-amber-600 mb-4">{portsError}</p>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -140,13 +193,19 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
             <div className="relative">
               <input
                 type="text"
-                value={sectorSearchQuery || query.sector}
+                value={
+                  sectorSearchQuery ||
+                  getSectorLabelById(query.sector) ||
+                  ''
+                }
                 onChange={(e) => {
                   setSectorSearchQuery(e.target.value);
                   setShowSectorDropdown(true);
                 }}
                 onFocus={() => setShowSectorDropdown(true)}
-                onBlur={() => setTimeout(() => setShowSectorDropdown(false), 200)}
+                onBlur={() =>
+                  setTimeout(() => setShowSectorDropdown(false), 200)
+                }
                 placeholder="ابحث أو اختر قطاع..."
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               />
@@ -154,21 +213,22 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
                 <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                   {filteredSectors.map((sector) => (
                     <div
-                      key={sector}
+                      key={sector.id}
                       onClick={() => {
-                        setQuery({ ...query, sector });
+                        // 👈 نخزن فقط id (sectionId) في query.sector
+                        setQuery({ ...query, sector: sector.id });
                         setSectorSearchQuery('');
                         setShowSectorDropdown(false);
                       }}
                       className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
                     >
-                      {sector}
+                      {sector.label}
                     </div>
                   ))}
                 </div>
               )}
             </div>
-            {(query.sector === 'جميع القطاعات' || !query.sector) && (
+            {(!query.sector || query.sector === 'جميع القطاعات') && (
               <div className="flex items-start gap-2 mt-2 text-amber-700 bg-amber-50 px-3 py-2 rounded-lg text-sm">
                 <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 <span>اختيار قطاع محدد قد يساعدك في الوصول إلى المنتج</span>
@@ -176,27 +236,28 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
             )}
           </div>
 
-          {/* التعرفة (TariffTreeSelect المتصل بالـ API /chapters/sections/16) */}
+          {/* التعرفة */}
           <div>
             <label className="block text-slate-700 mb-2">التعرفة</label>
             <TariffTreeSelect
               selectedItems={
                 Array.isArray(query.productCategory)
                   ? (query.productCategory as unknown as string[])
-                  : query.productCategory && query.productCategory !== 'اختر التعرفة'
-                    ? query.productCategory.split(',').map((s) => s.trim()).filter(Boolean)
-                    : []
+                  : query.productCategory &&
+                    query.productCategory !== 'اختر التعرفة'
+                  ? query.productCategory
+                      .split(',')
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                  : []
               }
               onChange={(items) => {
-                // نخزن الـ IDs داخل productCategory كسلسلة
                 const newValue =
-                  items.length === 0
-                    ? 'اختر التعرفة'
-                    : items.join(','); // مثال: "8401.10,8401.20"
-
+                  items.length === 0 ? 'اختر التعرفة' : items.join(',');
                 console.log('QueryBuilder productCategory =', newValue);
                 setQuery({ ...query, productCategory: newValue });
               }}
+              // الآن TariffTreeSelect يستقبل sectorId (مثلاً "03")
               sector={query.sector}
             />
           </div>
@@ -205,13 +266,15 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
           <div>
             <label className="block text-slate-700 mb-2">الاتجاه</label>
             <select
-              value={query.location}
-              onChange={(e) => setQuery({ ...query, location: e.target.value })}
+              value={query.direction}
+              onChange={(e) =>
+                setQuery({ ...query, direction: e.target.value })
+              }
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
               {directions.map((direction) => (
-                <option key={direction} value={direction}>
-                  {direction}
+                <option key={direction.value} value={direction.value}>
+                  {direction.name}
                 </option>
               ))}
             </select>
@@ -222,12 +285,14 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
             <label className="block text-slate-700 mb-2">المقياس</label>
             <select
               value={query.metric}
-              onChange={(e) => setQuery({ ...query, metric: e.target.value })}
+              onChange={(e) =>
+                setQuery({ ...query, metric: e.target.value })
+              }
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
               {metrics.map((metric) => (
-                <option key={metric} value={metric}>
-                  {metric}
+                <option key={metric.value} value={metric.value}>
+                  {metric.name}
                 </option>
               ))}
             </select>
@@ -265,7 +330,7 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
             />
           </div>
 
-          {/* المنفذ */}
+          {/* المنفذ من API */}
           <div className="md:col-span-2 lg:col-span-3">
             <label className="block text-slate-700 mb-2">المنفذ</label>
             <select
@@ -273,21 +338,22 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
               onChange={(e) => setQuery({ ...query, port: e.target.value })}
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
-              {Object.entries(ports).map(([category, items]) =>
-                items.length === 0 ? (
-                  <option key={category} value={category}>
-                    {category}
+              {/* خيار عام */}
+              <option value="جميع المنافذ">جميع المنافذ</option>
+
+              {portTypes.map((group) => (
+                <optgroup key={group.id} label={group.label}>
+                  {/* (اختياري) جميع منافذ هذا النوع */}
+                  <option value={`ALL_TYPE_${group.id}`}>
+                    جميع منافذ {group.label}
                   </option>
-                ) : (
-                  <optgroup key={category} label={category}>
-                    {items.map((port) => (
-                      <option key={port} value={port}>
-                        {port}
-                      </option>
-                    ))}
-                  </optgroup>
-                )
-              )}
+                  {group.ports.map((port) => (
+                    <option key={port.code} value={port.code}>
+                      {port.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </div>
         </div>

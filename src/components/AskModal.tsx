@@ -20,7 +20,11 @@ export function AskModal({ onClose, onQueryGenerate, currentQuery }: AskModalPro
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'مرحباً! يمكنني مساعدتك في بناء استعلامات تحليل بيانات الاستيراد والتصدير. اطرح سؤالك بأي طريقة تريدها، على سبيل المثال:\n\n• كم عدد وحدات مسحوق الغسيل المستوردة في الربع الأول؟\n• ما هي أكثر المنافذ استخداماً لاستيراد منظفات الأطباق؟\n• أريد معرفة الوزن الإجمالي للمنسوجات المستوردة عبر المنافذ البحرية',
+      text:
+        'مرحباً! يمكنني مساعدتك في بناء استعلامات تحليل بيانات الاستيراد والتصدير. اطرح سؤالك بأي طريقة تريدها، على سبيل المثال:\n\n' +
+        '• كم عدد وحدات مسحوق الغسيل المستوردة في الربع الأول؟\n' +
+        '• ما هي أكثر المنافذ استخداماً لاستيراد منظفات الأطباق؟\n' +
+        '• أريد معرفة الوزن الإجمالي للمنسوجات المستوردة عبر المنافذ البحرية',
       sender: 'assistant',
       timestamp: new Date()
     }
@@ -35,10 +39,16 @@ export function AskModal({ onClose, onQueryGenerate, currentQuery }: AskModalPro
     'ما هي أكثر المنافذ الجوية استخداماً لاستيراد المنسوجات؟'
   ];
 
+  /**
+   * 🧠 تحويل السؤال (لغة طبيعية) إلى QueryData
+   * بما يتوافق مع:
+   *  - القطاعات من /section بشكل "الكود - الوصف"
+   *  - المقاييس: عدد الوحدات / الوزن الإجمالي / عدد الشحنات
+   *  - المنافذ: "جميع المنافذ" أو ALL_TYPE_x أو كود منفذ مثل "10"
+   */
   const parseQuestion = (question: string): QueryData => {
-    // Simple NLP-like parsing for demo purposes
-    const lowerQuestion = question.toLowerCase();
-    
+    const lower = question.toLowerCase();
+
     let sector = currentQuery.sector;
     let metric = currentQuery.metric;
     let location = currentQuery.location;
@@ -46,60 +56,81 @@ export function AskModal({ onClose, onQueryGenerate, currentQuery }: AskModalPro
     let port = currentQuery.port;
     let period = currentQuery.period;
 
-    // Detect sector
-    if (lowerQuestion.includes('تنظيف') || lowerQuestion.includes('منظف')) {
-      sector = 'استيراد مواد التنظيف';
-    } else if (lowerQuestion.includes('غذائي') || lowerQuestion.includes('طعام')) {
-      sector = 'استيراد المواد الغذائية';
-    } else if (lowerQuestion.includes('إلكترون')) {
-      sector = 'استيراد الإلكترونيات';
-    } else if (lowerQuestion.includes('بناء')) {
-      sector = 'استيراد مواد البناء';
-    } else if (lowerQuestion.includes('منسوج') || lowerQuestion.includes('نسيج')) {
-      sector = 'استيراد المنسوجات';
+    // 🔹 استيراد / تصدير
+    if (lower.includes('تصدير')) {
+      location = 'تصدير';
+    } else if (lower.includes('استيراد')) {
+      location = 'استيراد';
     }
 
-    // Detect metric
-    if (lowerQuestion.includes('وزن') || lowerQuestion.includes('كيلو')) {
+    // 🔹 القطاع (أسماء تقريبية بناءً على مثال /section)
+    if (lower.includes('تنظيف') || lower.includes('منظف')) {
+      // مواد تنظيف -> كيماويات
+      sector = '06 - منتجات الصناعات الكيماوية أو الصناعات المرتبطة بها';
+    } else if (lower.includes('غذائ') || lower.includes('طعام') || lower.includes('أغذية')) {
+      sector =
+        '04 - منتجات صناعة الأغذية ؛ مشروبات ؛ سوائل ؛ سوائل كحولية وخل ؛ تبغ وأبدال تبغ مصنعة';
+    } else if (lower.includes('إلكترون') || lower.includes('الكترون')) {
+      sector =
+        '16 - آلات وأجهزة آلية؛ معدات كهربائية؛ أجزاؤها؛ أجهزة تسجيل وإذاعة الصوت وأجهزة تسجيل وإذاعة الصوت والصورة في الإذاعة المرئية (التلفزيون)، أجزاء ولوازم هذه الأجهزة';
+    } else if (lower.includes('منسوج') || lower.includes('نسيج')) {
+      sector = '11 - مـواد نسجيـة ومـصنوعـات مـن هـذه المـواد';
+    }
+
+    // 🔹 المقياس – مهم: لازم يكون واحد من:
+    // "عدد الوحدات" | "الوزن الإجمالي" | "عدد الشحنات"
+    if (lower.includes('وزن') || lower.includes('كيلو') || lower.includes('طن')) {
       metric = 'الوزن الإجمالي';
-    } else if (lowerQuestion.includes('عدد') || lowerQuestion.includes('وحدات')) {
-      metric = 'عدد الوحدات الإجمالي';
+    } else if (lower.includes('شحنات') || lower.includes('الشحنات')) {
+      metric = 'عدد الشحنات';
+    } else if (lower.includes('عدد') || lower.includes('وحدات')) {
+      metric = 'عدد الوحدات';
     }
 
-    // Detect product category
-    if (lowerQuestion.includes('مسحوق')) {
+    // 🔹 فئة المنتج (وصف فقط – الكود يأتي من TariffTreeSelect)
+    if (lower.includes('مسحوق')) {
       productCategory = 'مسحوق الغسيل';
-    } else if (lowerQuestion.includes('أطباق')) {
+    } else if (lower.includes('أطباق')) {
       productCategory = 'منظفات الأطباق';
-    } else if (lowerQuestion.includes('أرض')) {
+    } else if (lower.includes('أرض')) {
       productCategory = 'منظفات الأرضيات';
-    } else if (lowerQuestion.includes('معطر')) {
+    } else if (lower.includes('معطر')) {
       productCategory = 'معطرات الجو';
-    } else if (lowerQuestion.includes('مناديل')) {
+    } else if (lower.includes('مناديل')) {
       productCategory = 'مناديل التنظيف';
     }
 
-    // Detect port
-    if (lowerQuestion.includes('جدة')) {
-      port = 'ميناء جدة الإسلامي';
-    } else if (lowerQuestion.includes('دمام')) {
-      port = 'ميناء الدمام';
-    } else if (lowerQuestion.includes('جبيل')) {
-      port = 'ميناء الجبيل';
-    } else if (lowerQuestion.includes('بحري') || lowerQuestion.includes('بحرية')) {
-      port = 'جميع المنافذ البحرية';
-    } else if (lowerQuestion.includes('جوي') || lowerQuestion.includes('جوية')) {
-      port = 'جميع المنافذ الجوية';
-    } else if (lowerQuestion.includes('بري') || lowerQuestion.includes('برية')) {
-      port = 'جميع المنافذ البرية';
+    // 🔹 المنفذ (قيم متوافقة مع QueryBuilder الجديد)
+    //  - "جميع المنافذ"
+    //  - "ALL_TYPE_1" = منافذ بحرية
+    //  - "ALL_TYPE_3" = منافذ برية
+    //  - "ALL_TYPE_4" = منافذ جوية
+    //  - أو كود منفذ محدد مثل "10" (ميناء جدة الإسلامي)
+    if (lower.includes('جميع المنافذ')) {
+      port = 'جميع المنافذ';
+    } else if (lower.includes('بحري') || lower.includes('بحرية')) {
+      port = 'ALL_TYPE_1';
+    } else if (lower.includes('بري') || lower.includes('برية')) {
+      port = 'ALL_TYPE_3';
+    } else if (lower.includes('جوي') || lower.includes('جوية')) {
+      port = 'ALL_TYPE_4';
+    } else if (lower.includes('جدة')) {
+      // ميناء جدة الإسلامي – portCode = "10"
+      port = '10';
+    } else if (lower.includes('الدمام')) {
+      // ميناء الملك عبدالعزيز بالدمام – portCode = "30"
+      port = '30';
+    } else if (lower.includes('الجبيل')) {
+      // نختار مثلاً "42" (جمرك محافظة الجبيل)
+      port = '42';
     }
 
-    // Detect time period
-    if (lowerQuestion.includes('ربع الأول') || lowerQuestion.includes('الربع الاول')) {
+    // 🔹 الفترة الزمنية
+    if (lower.includes('الربع الأول') || lower.includes('الربع الاول')) {
       period = { from: '2025-01-01', to: '2025-03-31' };
-    } else if (lowerQuestion.includes('نصف الأول') || lowerQuestion.includes('النصف الاول')) {
+    } else if (lower.includes('النصف الأول') || lower.includes('النصف الاول')) {
       period = { from: '2025-01-01', to: '2025-06-30' };
-    } else if (lowerQuestion.includes('العام الحالي') || lowerQuestion.includes('2025')) {
+    } else if (lower.includes('العام الحالي') || lower.includes('2025')) {
       period = { from: '2025-01-01', to: '2025-12-31' };
     }
 
@@ -123,23 +154,23 @@ export function AskModal({ onClose, onQueryGenerate, currentQuery }: AskModalPro
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInputText('');
     setIsProcessing(true);
 
-    // Simulate processing delay
     setTimeout(() => {
       const suggestedQuery = parseQuestion(inputText);
-      
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'فهمت! لقد قمت بإنشاء استعلام بناءً على سؤالك. يمكنك مراجعة الاستعلام أدناه والضغط على "تطبيق الاستعلام" لعرض النتائج.',
+        text:
+          'فهمت! لقد قمت بإنشاء استعلام بناءً على سؤالك. يمكنك مراجعة الاستعلام أدناه والضغط على "تطبيق الاستعلام" لعرض النتائج.',
         sender: 'assistant',
         timestamp: new Date(),
         suggestedQuery
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
       setIsProcessing(false);
     }, 1000);
   };
@@ -179,7 +210,9 @@ export function AskModal({ onClose, onQueryGenerate, currentQuery }: AskModalPro
           </div>
           <div className="bg-white/60 px-3 py-2 rounded col-span-2">
             <span className="text-slate-600">الفترة:</span>
-            <span className="mr-2 text-slate-900">{query.period.from} إلى {query.period.to}</span>
+            <span className="mr-2 text-slate-900">
+              {query.period.from} إلى {query.period.to}
+            </span>
           </div>
         </div>
         <button
@@ -219,7 +252,9 @@ export function AskModal({ onClose, onQueryGenerate, currentQuery }: AskModalPro
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${
+                message.sender === 'user' ? 'justify-end' : 'justify-start'
+              }`}
             >
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 ${
@@ -237,9 +272,18 @@ export function AskModal({ onClose, onQueryGenerate, currentQuery }: AskModalPro
             <div className="flex justify-start">
               <div className="bg-slate-100 rounded-2xl px-4 py-3">
                 <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  <div
+                    className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                    style={{ animationDelay: '0ms' }}
+                  ></div>
+                  <div
+                    className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                    style={{ animationDelay: '150ms' }}
+                  ></div>
+                  <div
+                    className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                    style={{ animationDelay: '300ms' }}
+                  ></div>
                 </div>
               </div>
             </div>

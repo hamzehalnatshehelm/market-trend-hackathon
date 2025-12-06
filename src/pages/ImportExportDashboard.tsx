@@ -12,8 +12,8 @@ import Header from './Header';
 export interface QueryData {
   sector: string;
   metric: string;
-  location: string;
-  productCategory: string;
+  direction: string;
+  productCategory: string; // لو حاب تخليها array لاحقاً تغيّرها إلى string[]
   period: {
     from: string;
     to: string;
@@ -37,31 +37,30 @@ export interface CompanyData {
 
 type ModalType = 'drilldown' | 'tariff' | 'ports' | 'companies' | 'ask' | null;
 
-const buildQueryString = (query: QueryData) => {
-  const params = new URLSearchParams();
-
-  params.set('sector', query.sector);
-  params.set('metric', query.metric);
-  params.set('location', query.location);
-  params.set('productCategory', query.productCategory);
-  params.set('periodFrom', query.period.from);
-  params.set('periodTo', query.period.to);
-  params.set('port', query.port);
-
-  return params.toString();
+// بدال buildQueryString خلّيناها تبني جسم الطلب للـ POST
+const buildRequestBody = (query: QueryData) => {
+  return {
+    sectionId: query.sector,
+    scale: query.metric,
+    direction: query.direction,
+    tariffs: query.productCategory.split(',').map(v => v.trim()), // لو صارت array استخدم query.productCategory.join(',')
+    dateFrom: query.period.from,
+    dateTo: query.period.to,
+    port: [query.port],
+  };
 };
 
 export default function ImportExportDashboard() {
   const [currentQuery, setCurrentQuery] = useState<QueryData>({
-    sector: 'جميع القطاعات',
-    metric: 'عدد الوحدات',
-    location: 'استيراد',
-    productCategory: 'اختر التعرفة',
+    sector: '',
+    metric: 'QUANTITY',
+    direction: '',
+    productCategory: '',
     period: {
-      from: '2024-12-01',
-      to: '2025-12-01',
+      from: '',
+      to: '',
     },
-    port: 'جميع المنافذ',
+    port: '',
   });
 
   const [dataCache] = useState<Map<string, ChartDataPoint[]>>(new Map());
@@ -79,9 +78,9 @@ export default function ImportExportDashboard() {
 
   const getCacheKey = (query: QueryData) => {
     return JSON.stringify({
-      sector: query.sector,
+      sectionId: query.sector,
       metric: query.metric,
-      location: query.location,
+      direction: query.direction,
       productCategory: query.productCategory,
       period: query.period,
       port: query.port,
@@ -95,16 +94,22 @@ export default function ImportExportDashboard() {
 
     const cacheKey = getCacheKey(query);
 
+    // لو حاب ترجع تفعّل الكاش
     if (dataCache.has(cacheKey)) {
       setChartData(dataCache.get(cacheKey)!);
       return;
     }
 
     try {
-      const qs = buildQueryString(query);
-      const url = `http://localhost:4000/chartData?${qs}`;
+      const body = buildRequestBody(query);
 
-      const response = await fetch(url);
+      const response = await fetch('/market-trends/v1/market-trends/chart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
 
       if (!response.ok) throw new Error('API Error');
 
@@ -113,9 +118,20 @@ export default function ImportExportDashboard() {
       dataCache.set(cacheKey, apiData);
       setChartData(apiData);
     } catch (error) {
+      // بيانات تجريبية في حال الـ API تعطل
       const months = [
-        'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-        'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+        'يناير',
+        'فبراير',
+        'مارس',
+        'أبريل',
+        'مايو',
+        'يونيو',
+        'يوليو',
+        'أغسطس',
+        'سبتمبر',
+        'أكتوبر',
+        'نوفمبر',
+        'ديسمبر',
       ];
 
       const newData = months.map((m) => ({
@@ -146,8 +162,8 @@ export default function ImportExportDashboard() {
           currentQuery.metric === 'عدد الوحدات'
             ? 'الوزن الإجمالي'
             : currentQuery.metric === 'الوزن الإجمالي'
-              ? 'عدد الشحنات'
-              : 'عدد الوحدات';
+            ? 'عدد الشحنات'
+            : 'عدد الوحدات';
 
         handleQuerySubmit({ ...currentQuery, metric: newMetric });
         break;
@@ -174,7 +190,10 @@ export default function ImportExportDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" dir="rtl">
+    <div
+      className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100"
+      dir="rtl"
+    >
       <div className="container mx-auto px-4 py-8">
         <Header onAskClick={() => setActiveModal('ask')} />
 
@@ -183,10 +202,11 @@ export default function ImportExportDashboard() {
           <button
             onClick={() => setActiveTab('volume')}
             className={`px-4 py-3 rounded-xl font-medium text-sm border transition-all w-fit
-      ${activeTab === 'volume'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-              }`}
+      ${
+        activeTab === 'volume'
+          ? 'bg-blue-600 text-white shadow-lg'
+          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+      }`}
           >
             حجم الاستيراد أو التصدير
           </button>
@@ -194,10 +214,11 @@ export default function ImportExportDashboard() {
           <button
             onClick={() => setActiveTab('unitCost')}
             className={`px-4 py-3 rounded-xl font-medium text-sm border transition-all w-fit
-      ${activeTab === 'unitCost'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-              }`}
+      ${
+        activeTab === 'unitCost'
+          ? 'bg-blue-600 text-white shadow-lg'
+          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+      }`}
           >
             التغير في تكلفة الوحدة
           </button>
@@ -205,10 +226,11 @@ export default function ImportExportDashboard() {
           <button
             onClick={() => setActiveTab('efficiency')}
             className={`px-4 py-3 rounded-xl font-medium text-sm border transition-all w-fit
-      ${activeTab === 'efficiency'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-              }`}
+      ${
+        activeTab === 'efficiency'
+          ? 'bg-blue-600 text-white shadow-lg'
+          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+      }`}
           >
             الكفاءة الوقتية لشركاء التخليص
           </button>
@@ -217,13 +239,15 @@ export default function ImportExportDashboard() {
         {/* Tab Content */}
         {activeTab === 'unitCost' && (
           <div className="mb-8 bg-amber-50 border border-amber-200 p-5 rounded-xl text-amber-800">
-            🌟 سيتم توفير هذا الاستعلام قريباً — نعمل حالياً على تطوير تحليل التغير في تكلفة الوحدة.
+            🌟 سيتم توفير هذا الاستعلام قريباً — نعمل حالياً على تطوير تحليل
+            التغير في تكلفة الوحدة.
           </div>
         )}
 
         {activeTab === 'efficiency' && (
           <div className="mb-8 bg-amber-50 border border-amber-200 p-5 rounded-xl text-amber-800">
-            ⏱️ سيتم توفير هذا الاستعلام قريباً — قسم الكفاءة الوقتية لشركاء التخليص تحت التطوير.
+            ⏱️ سيتم توفير هذا الاستعلام قريباً — قسم الكفاءة الوقتية لشركاء
+            التخليص تحت التطوير.
           </div>
         )}
 
@@ -233,7 +257,9 @@ export default function ImportExportDashboard() {
               <h1 className="text-2xl font-semibold text-slate-900 mb-2">
                 استعلام حجم الاستيراد أو التصدير من منتجـ(ات) معينة
               </h1>
-              <p className="text-slate-600">استعلامات متعددة الأبعاد مع تصور بياني</p>
+              <p className="text-slate-600">
+                استعلامات متعددة الأبعاد مع تصور بياني
+              </p>
             </div>
 
             <QueryBuilder
@@ -261,21 +287,40 @@ export default function ImportExportDashboard() {
       </div>
 
       {/* Result Modals */}
-      {activeTab === 'volume' && hasSearched && activeModal === 'drilldown' && selectedMonth && (
-        <DrilldownModal month={selectedMonth} query={currentQuery} onClose={handleCloseModal} />
-      )}
+      {activeTab === 'volume' &&
+        hasSearched &&
+        activeModal === 'drilldown' &&
+        selectedMonth && (
+          <DrilldownModal
+            month={selectedMonth}
+            query={currentQuery}
+            onClose={handleCloseModal}
+          />
+        )}
 
-      {activeTab === 'volume' && hasSearched && activeModal === 'tariff' && (
-        <TariffModal query={currentQuery} onClose={handleCloseModal} />
-      )}
+      {activeTab === 'volume' &&
+        hasSearched &&
+        activeModal === 'tariff' && (
+          <TariffModal query={currentQuery} onClose={handleCloseModal} />
+        )}
 
-      {activeTab === 'volume' && hasSearched && activeModal === 'ports' && (
-        <PortDistributionModal query={currentQuery} onClose={handleCloseModal} />
-      )}
+      {activeTab === 'volume' &&
+        hasSearched &&
+        activeModal === 'ports' && (
+          <PortDistributionModal
+            query={currentQuery}
+            onClose={handleCloseModal}
+          />
+        )}
 
-      {activeTab === 'volume' && hasSearched && activeModal === 'companies' && (
-        <ClearanceCompaniesModal query={currentQuery} onClose={handleCloseModal} />
-      )}
+      {activeTab === 'volume' &&
+        hasSearched &&
+        activeModal === 'companies' && (
+          <ClearanceCompaniesModal
+            query={currentQuery}
+            onClose={handleCloseModal}
+          />
+        )}
 
       {/* AskModal always works */}
       {activeModal === 'ask' && (
