@@ -10,15 +10,15 @@ import { AskModal } from '../components/AskModal';
 import Header from './Header';
 
 export interface QueryData {
-  sector: string;
-  metric: string;
-  direction: string;
-  productCategory: string; // لو حاب تخليها array لاحقاً تغيّرها إلى string[]
+  sector: string | null;
+  metric: string | null;
+  direction: string | null;
+  productCategory: string | null; // لو حاب تخليها array لاحقاً تغيّرها إلى string[]
   period: {
-    from: string;
-    to: string;
+    from: string | null;
+    to: string | null;
   };
-  port: string;
+  port: string | null;
 }
 
 export interface ChartDataPoint {
@@ -43,24 +43,24 @@ const buildRequestBody = (query: QueryData) => {
     sectionId: query.sector,
     scale: query.metric,
     direction: query.direction,
-    tariffs: query.productCategory.split(',').map(v => v.trim()), // لو صارت array استخدم query.productCategory.join(',')
+    tariffs: query.productCategory ? query.productCategory.split(',').map(v => v.trim()) : null, // لو صارت array استخدم query.productCategory.join(',')
     dateFrom: query.period.from,
     dateTo: query.period.to,
-    port: [query.port],
+    port: query.port ? [query.port] : null,
   };
 };
 
 export default function ImportExportDashboard() {
   const [currentQuery, setCurrentQuery] = useState<QueryData>({
-    sector: '',
+    sector: null,
     metric: 'QUANTITY',
-    direction: '',
-    productCategory: '',
+    direction: null,
+    productCategory: null,
     period: {
-      from: '',
-      to: '',
+      from: null,
+      to: null,
     },
-    port: '',
+    port: null,
   });
 
   const [dataCache] = useState<Map<string, ChartDataPoint[]>>(new Map());
@@ -103,7 +103,7 @@ export default function ImportExportDashboard() {
     try {
       const body = buildRequestBody(query);
 
-      const response = await fetch('/market-trends/v1/market-trends/chart', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/market-trends/v1/market-trends/chart`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,9 +114,9 @@ export default function ImportExportDashboard() {
       if (!response.ok) throw new Error('API Error');
 
       const apiData = (await response.json()) as ChartDataPoint[];
-
-      dataCache.set(cacheKey, apiData);
-      setChartData(apiData);
+      console.log('Fetched API Data:', apiData.response);
+      dataCache.set(cacheKey, apiData.response);
+      setChartData(apiData.response);
     } catch (error) {
       // بيانات تجريبية في حال الـ API تعطل
       const months = [
@@ -162,8 +162,8 @@ export default function ImportExportDashboard() {
           currentQuery.metric === 'عدد الوحدات'
             ? 'الوزن الإجمالي'
             : currentQuery.metric === 'الوزن الإجمالي'
-            ? 'عدد الشحنات'
-            : 'عدد الوحدات';
+              ? 'عدد الشحنات'
+              : 'عدد الوحدات';
 
         handleQuerySubmit({ ...currentQuery, metric: newMetric });
         break;
@@ -202,11 +202,10 @@ export default function ImportExportDashboard() {
           <button
             onClick={() => setActiveTab('volume')}
             className={`px-4 py-3 rounded-xl font-medium text-sm border transition-all w-fit
-      ${
-        activeTab === 'volume'
-          ? 'bg-blue-600 text-white shadow-lg'
-          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-      }`}
+      ${activeTab === 'volume'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+              }`}
           >
             حجم الاستيراد أو التصدير
           </button>
@@ -214,11 +213,10 @@ export default function ImportExportDashboard() {
           <button
             onClick={() => setActiveTab('unitCost')}
             className={`px-4 py-3 rounded-xl font-medium text-sm border transition-all w-fit
-      ${
-        activeTab === 'unitCost'
-          ? 'bg-blue-600 text-white shadow-lg'
-          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-      }`}
+      ${activeTab === 'unitCost'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+              }`}
           >
             التغير في تكلفة الوحدة
           </button>
@@ -226,11 +224,10 @@ export default function ImportExportDashboard() {
           <button
             onClick={() => setActiveTab('efficiency')}
             className={`px-4 py-3 rounded-xl font-medium text-sm border transition-all w-fit
-      ${
-        activeTab === 'efficiency'
-          ? 'bg-blue-600 text-white shadow-lg'
-          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-      }`}
+      ${activeTab === 'efficiency'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+              }`}
           >
             الكفاءة الوقتية لشركاء التخليص
           </button>

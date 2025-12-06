@@ -9,28 +9,78 @@ interface SuggestedQueriesProps {
 }
 
 export function SuggestedQueries({ onAction, currentQuery }: SuggestedQueriesProps) {
-  const isSpecificPortSelected =
-    currentQuery.port !== 'جميع المنافذ' &&
-    !currentQuery.port.includes('جميع المنافذ');
+  // 👇 دعم أن تكون port إما string أو string[]
+  const isSpecificPortSelected = (() => {
+    const portValue = (currentQuery as any).port;
 
-  // Get metric label based on current query
+    if (Array.isArray(portValue)) {
+      // لو فيه منافذ محددة ومش包含 "جميع المنافذ"
+      return portValue.length > 0 && !portValue.includes('جميع المنافذ');
+    }
+
+    if (typeof portValue === 'string') {
+      return portValue !== '' && portValue !== 'جميع المنافذ';
+    }
+
+    return false;
+  })();
+
+  // 👇 قراءة الاتجاه سواء كان direction (IMP/EXP) أو location بالعربي
+  const getDirectionLabel = () => {
+    const directionValue =
+      (currentQuery as any).direction ?? (currentQuery as any).location;
+
+    if (directionValue === 'IMP' || directionValue === 'استيراد') {
+      return 'الاستيراد';
+    }
+    if (directionValue === 'EXP' || directionValue === 'تصدير') {
+      return 'التصدير';
+    }
+    return 'الاستيراد/التصدير';
+  };
+
+  // 👇 إرجاع النص العربي المناسب للمقياس بناءً على الكود
   const getMetricLabel = () => {
     switch (currentQuery.metric) {
-      case 'عدد الوحدات':
+      case 'QUANTITY':
         return 'عدد الوحدات';
-      case 'الوزن الإجمالي':
-        return 'الوزن';
-      case 'عدد الشحنات':
+      case 'WEIGHT':
+        return 'الوزن الإجمالي';
+      case 'SHIPMENTS_COUNT':
         return 'عدد الشحنات';
       default:
+        // لو لسه المقياس مخزن كنص عربي أو قيمة غير متوقعة
+        if (
+          currentQuery.metric === 'عدد الوحدات' ||
+          currentQuery.metric === 'الوزن الإجمالي' ||
+          currentQuery.metric === 'عدد الشحنات'
+        ) {
+          return currentQuery.metric;
+        }
         return 'عدد الوحدات';
     }
   };
 
-  // Get direction label
-  const getDirectionLabel = () => {
-    return currentQuery.location === 'استيراد' ? 'الاستيراد' : 'التصدير';
+  // 👇 النص الديناميكي لسؤال "تبديل" المقياس
+  const getMetricSwapText = () => {
+    switch (currentQuery.metric) {
+      case 'QUANTITY':
+      case 'عدد الوحدات':
+        return 'الكيلو جرامات عوضاً عن عدد الوحدات';
+      case 'WEIGHT':
+      case 'الوزن الإجمالي':
+        return 'عدد الوحدات عوضاً عن الوزن';
+      case 'SHIPMENTS_COUNT':
+      case 'عدد الشحنات':
+        return 'عدد الوحدات عوضاً عن عدد الشحنات';
+      default:
+        return 'مقياس آخر للمقارنة';
+    }
   };
+
+  const metricLabel = getMetricLabel();
+  const directionLabel = getDirectionLabel();
+  const metricSwapText = getMetricSwapText();
 
   const suggestedQueries: Array<{
     title: string;
@@ -39,7 +89,7 @@ export function SuggestedQueries({ onAction, currentQuery }: SuggestedQueriesPro
     hideCondition?: boolean;
   }> = [
     {
-      title: `هل تحب أن أزودك برسم بياني يرصد التغير في ${getMetricLabel()} كل شهر؟`,
+      title: `هل تحب أن أزودك برسم بياني يرصد التغير في ${metricLabel} كل شهر؟`,
       description: 'عرض تفصيلي للتغيرات الشهرية مع مؤشرات النمو',
       action: 'monthly',
     },
@@ -49,25 +99,19 @@ export function SuggestedQueries({ onAction, currentQuery }: SuggestedQueriesPro
       action: 'tariff',
     },
     {
-      title: `هل تريد البحث بدلالة ${
-        currentQuery.metric === 'عدد الوحدات'
-          ? 'الكيلو جرامات عوضاً عن عدد الوحدات'
-          : currentQuery.metric === 'الوزن الإجمالي'
-          ? 'عدد الوحدات عوضاً عن الوزن'
-          : 'عدد الوحدات عوضاً عن عدد الشحنات'
-      } ثم مقارنتها مع السنة الماضية؟`,
+      title: `هل تريد البحث بدلالة ${metricSwapText} ثم مقارنتها مع السنة الماضية؟`,
       description: 'مقارنة المقاييس المختلفة مع السنة الماضية',
       action: 'weight',
     },
     {
       title: 'هل تريد معرفة أي من المنافذ كان الأكثر استخداماً؟',
-      description: `ترتيب المنافذ الجمركية حسب حجم ${getDirectionLabel()}`,
+      description: `ترتيب المنافذ الجمركية حسب حجم ${directionLabel}`,
       action: 'ports',
       hideCondition: isSpecificPortSelected,
     },
     {
-      title: `هل ترغب بالحصول على قائمة بشركات التخليص الجمركي على هذا المنفذ مرتبة بحسب حجم ${getDirectionLabel()}؟`,
-      description: `شركات التخليص مع بيانات الاتصال مرتبة حسب حجم ${getDirectionLabel()}`,
+      title: `هل ترغب بالحصول على قائمة بشركات التخليص الجمركي على هذا المنفذ مرتبة بحسب حجم ${directionLabel}؟`,
+      description: `شركات التخليص مع بيانات الاتصال مرتبة حسب حجم ${directionLabel}`,
       action: 'companies',
     },
   ];
@@ -77,7 +121,7 @@ export function SuggestedQueries({ onAction, currentQuery }: SuggestedQueriesPro
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 ه-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
           <Lightbulb className="w-5 h-5 text-yellow-600" />
         </div>
         <div>
