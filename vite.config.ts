@@ -64,7 +64,7 @@ export default defineConfig({
         secure: false,
       },
       '/market-trends': {
-        target: 'http://10.41.146.92:6061',
+        target: 'http://10.41.146.92:6062',
         changeOrigin: true,
         secure: false,
       },
