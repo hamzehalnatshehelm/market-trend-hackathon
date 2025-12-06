@@ -70,7 +70,7 @@ const OtpPage: React.FC = () => {
       });
 
       const data = res.data;
-debugger
+
       if (data.token) {
         login(data.token, email);
 
