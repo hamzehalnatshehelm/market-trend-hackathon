@@ -186,20 +186,28 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
             )}
           </div>
 
-          {/* المقياس */}
+          {/* التعرفة (TariffTreeSelect كما هو) */}
           <div>
-            <label className="block text-slate-700 mb-2">المقياس</label>
-            <select
-              value={query.metric}
-              onChange={(e) => setQuery({ ...query, metric: e.target.value })}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              {metrics.map((metric) => (
-                <option key={metric} value={metric}>
-                  {metric}
-                </option>
-              ))}
-            </select>
+            <label className="block text-slate-700 mb-2">التعرفة</label>
+            <TariffTreeSelect
+              selectedItems={
+                Array.isArray(query.productCategory)
+                  ? (query.productCategory as unknown as string[])
+                  : query.productCategory && query.productCategory !== 'اختر التعرفة'
+                    ? query.productCategory.split(', ').filter(Boolean)
+                    : []
+              }
+              onChange={(items) => {
+                const newValue =
+                  items.length === 0
+                    ? 'اختر التعرفة'
+                    : items.length === 1
+                      ? items[0]
+                      : items.join(', ');
+                setQuery({ ...query, productCategory: newValue });
+              }}
+              sector={query.sector}
+            />
           </div>
 
           {/* الاتجاه */}
@@ -218,28 +226,20 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
             </select>
           </div>
 
-          {/* التعرفة (TariffTreeSelect كما هو) */}
+          {/* المقياس */}
           <div>
-            <label className="block text-slate-700 mb-2">التعرفة</label>
-            <TariffTreeSelect
-              selectedItems={
-                Array.isArray(query.productCategory)
-                  ? (query.productCategory as unknown as string[])
-                  : query.productCategory && query.productCategory !== 'اختر التعرفة'
-                  ? query.productCategory.split(', ').filter(Boolean)
-                  : []
-              }
-              onChange={(items) => {
-                const newValue =
-                  items.length === 0
-                    ? 'اختر التعرفة'
-                    : items.length === 1
-                    ? items[0]
-                    : items.join(', ');
-                setQuery({ ...query, productCategory: newValue });
-              }}
-              sector={query.sector}
-            />
+            <label className="block text-slate-700 mb-2">المقياس</label>
+            <select
+              value={query.metric}
+              onChange={(e) => setQuery({ ...query, metric: e.target.value })}
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              {metrics.map((metric) => (
+                <option key={metric} value={metric}>
+                  {metric}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* من تاريخ */}

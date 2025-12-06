@@ -104,40 +104,7 @@
     }
   ],
 
-  "tariffData": [
-    {
-      "name": "مسحوق غسيل مغلف 5 كيلو",
-      "value": 35,
-      "percentage": 35,
-      "color": "#1e5a7d",
-      "code": "3402.20.10",
-      "units": 17500
-    },
-    {
-      "name": "مسحوق غسيل معبأ في كارتون 10 كيلو",
-      "value": 28,
-      "percentage": 28,
-      "color": "#f59e42",
-      "code": "3402.20.11",
-      "units": 14000
-    },
-    {
-      "name": "مسحوق غسيل سائل في عبوات بلاستيكية",
-      "value": 22,
-      "percentage": 22,
-      "color": "#2d7a4f",
-      "code": "3402.20.12",
-      "units": 11000
-    },
-    {
-      "name": "مسحوق غسيل مركز في أكياس صغيرة",
-      "value": 15,
-      "percentage": 15,
-      "color": "#4db8d8",
-      "code": "3402.20.13",
-      "units": 7500
-    }
-  ],
+
 
   "companiesData": [
     {

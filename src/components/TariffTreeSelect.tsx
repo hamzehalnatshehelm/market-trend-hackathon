@@ -4,7 +4,7 @@ import { ChevronDown, ChevronLeft, Search, Check } from 'lucide-react';
 interface TariffItem {
   id: string;
   label: string;
-  level: 'chapter' | 'section' | 'item';
+  // level: 'chapter' | 'section' | 'item';
   children?: TariffItem[];
 }
 
@@ -25,25 +25,24 @@ export function TariffTreeSelect({ selectedItems, onChange, sector }: TariffTree
     {
       id: 'chapter-34',
       label: 'الفصل 34 - الصابون والمواد العضوية',
-      level: 'chapter',
+      // level: 'chapter',
       children: [
         {
           id: 'section-3401',
           label: 'القسم 3401 - الصابون',
-          level: 'section',
+          // level: 'section',
           children: [
-            { id: '3401.11', label: '3401.11 - صابون معطر', level: 'item' },
-            { id: '3401.19', label: '3401.19 - صابون آخر', level: 'item' },
+            { id: '3401.11', label: '3401.11 - صابون معطر' },
+            { id: '3401.19', label: '3401.19 - صابون آخر' },
           ]
         },
         {
           id: 'section-3402',
           label: 'القسم 3402 - مواد تنظيف',
-          level: 'section',
           children: [
-            { id: '3402.11', label: '3402.11 - مسحوق غسيل', level: 'item' },
-            { id: '3402.12', label: '3402.12 - سائل غسيل', level: 'item' },
-            { id: '3402.13', label: '3402.13 - منظفات أطباق', level: 'item' },
+            { id: '3402.11', label: '3402.11 - مسحوق غسيل' },
+            { id: '3402.12', label: '3402.12 - سائل غسيل' },
+            { id: '3402.13', label: '3402.13 - منظفات أطباق'},
           ]
         }
       ]
@@ -51,24 +50,21 @@ export function TariffTreeSelect({ selectedItems, onChange, sector }: TariffTree
     {
       id: 'chapter-19',
       label: 'الفصل 19 - المواد الغذائية المحضرة',
-      level: 'chapter',
       children: [
         {
           id: 'section-1901',
           label: 'القسم 1901 - مستحضرات غذائية',
-          level: 'section',
           children: [
-            { id: '1901.10', label: '1901.10 - مستحضرات للأطفال', level: 'item' },
-            { id: '1901.20', label: '1901.20 - مخبوزات', level: 'item' },
+            { id: '1901.10', label: '1901.10 - مستحضرات للأطفال' },
+            { id: '1901.20', label: '1901.20 - مخبوزات' },
           ]
         },
         {
           id: 'section-1902',
           label: 'القسم 1902 - معكرونة',
-          level: 'section',
           children: [
-            { id: '1902.11', label: '1902.11 - معكرونة محشوة', level: 'item' },
-            { id: '1902.19', label: '1902.19 - معكرونة أخرى', level: 'item' },
+            { id: '1902.11', label: '1902.11 - معكرونة محشوة' },
+            { id: '1902.19', label: '1902.19 - معكرونة أخرى' },
           ]
         }
       ]
@@ -76,15 +72,13 @@ export function TariffTreeSelect({ selectedItems, onChange, sector }: TariffTree
     {
       id: 'chapter-85',
       label: 'الفصل 85 - آلات وأجهزة كهربائية',
-      level: 'chapter',
       children: [
         {
           id: 'section-8501',
           label: 'القسم 8501 - محركات كهربائية',
-          level: 'section',
           children: [
-            { id: '8501.10', label: '8501.10 - محركات صغيرة', level: 'item' },
-            { id: '8501.20', label: '8501.20 - محركات كبيرة', level: 'item' },
+            { id: '8501.10', label: '8501.10 - محركات صغيرة' },
+            { id: '8501.20', label: '8501.20 - محركات كبيرة' },
           ]
         }
       ]

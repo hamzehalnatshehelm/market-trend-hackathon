@@ -62,6 +62,7 @@
       },
       "scripts": {
             "dev": "vite",
-            "build": "vite build"
+            "build": "vite build",
+            "server": "json-server --watch src/data/db.json --port 4000"
       }
 }

@@ -2,9 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { apiClient } from "../lib/axios";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../components/ui/use-toast";
 
 interface OtpLocationState {
-  state?: { email?: string };
+  state?: { email?: string, name?: string, mobileNumber?: string };
 }
 
 const OtpPage: React.FC = () => {
@@ -12,6 +13,8 @@ const OtpPage: React.FC = () => {
   const location = useLocation() as OtpLocationState;
   const { login } = useAuth();
   const email = location.state?.email || "";
+  const mobileNumber = location.state?.mobileNumber || "";
+  const name = location.state?.name || "";
 
   const [values, setValues] = useState(["", "", "", "", "", ""]);
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
@@ -19,6 +22,8 @@ const OtpPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!email) navigate("/login");
@@ -58,23 +63,50 @@ const OtpPage: React.FC = () => {
     try {
       setIsSubmitting(true);
 
+      // 1️⃣ التحقق من OTP
       const res = await apiClient.post("/user-management/auth/verify-otp", {
         email,
-        otp,
+        otp
       });
 
       const data = res.data;
-      console.log("verify-otp response:", data);
+debugger
+      if (data.token) {
+        login(data.token, email);
 
-      // الباك إند حالياً يرجّع فقط { email, otp }
-      // نولّد توكن وهمي مؤقتاً عشان ProtectedRoute يشتغل
-      const token = data.token ?? `otp-verified-${email}-${Date.now()}`;
-      const userEmail = data.email ?? email;
+        toast({
+          title: "تم التحقق بنجاح!",
+        });
+        navigate("/subscription");
+      } else {
+        // 2️⃣ استدعاء API التسجيل مباشرة بدون توكن
+        try {
+          const registerRes = await apiClient.post("/user-management/api/register", {
+            email,
+            name,
+            mobileNumber,
+            // لو عندك حقول أخرى ضيفها:
+            // planId,
+          });
 
-      login(token, userEmail);
+          console.log("register response:", registerRes.data);
+        } catch (registerError: any) {
+          console.error("register error:", registerError);
+          setServerError(
+            registerError?.response?.data?.message ||
+            "حدث خطأ أثناء إنشاء الحساب."
+          );
+          return; // نوقف لأن التسجيل فشل
+        }
 
-      alert("تم التحقق بنجاح!");
-      navigate("/subscription");
+        // 3️⃣ رسالة نجاح
+        toast({
+          title: "🎉 تم التحقق والتسجيل بنجاح!",
+        });
+
+        // 4️⃣ نتقل للخطوة التالية
+        navigate("/login");
+      }
     } catch (error: any) {
       console.error("verify-otp error:", error);
       setServerError(
@@ -85,7 +117,9 @@ const OtpPage: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
+
   };
+
 
   const resendOtp = async () => {
     setError(null);
@@ -99,7 +133,11 @@ const OtpPage: React.FC = () => {
       // لو الريسبونس "OTP sent to email"
       // نقدر نعرضه للمستخدم أو نخليها رسالة عربية:
       // alert(res.data);
-      alert("تم إعادة إرسال رمز التحقق إلى بريدك الإلكتروني!");
+      // alert("تم إعادة إرسال رمز التحقق إلى بريدك الإلكتروني!");
+      toast({
+        title: "✨ تم الإرسال بنجاح",
+        description: "تم إعادة إرسال رمز التحقق إلى بريدك الإلكتروني!",
+      });
     } catch (error: any) {
       console.error("request-otp error:", error);
       setServerError(

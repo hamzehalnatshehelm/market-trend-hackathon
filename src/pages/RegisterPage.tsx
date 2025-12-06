@@ -7,14 +7,14 @@ import { apiClient } from "../lib/axios";
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const [fullName, setFullName] = useState("");
-  const [mobile, setMobile] = useState("");
+  const [name, setName] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
   const [email, setEmail] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   const [errors, setErrors] = useState<{
-    fullName?: string;
-    mobile?: string;
+    name?: string;
+    mobileNumber?: string;
     email?: string;
     terms?: string;
   }>({});
@@ -23,23 +23,23 @@ const RegisterPage: React.FC = () => {
 
   const validate = () => {
     const newErrors: {
-      fullName?: string;
-      mobile?: string;
+      name?: string;
+      mobileNumber?: string;
       email?: string;
       terms?: string;
     } = {};
 
-    if (!fullName.trim()) {
-      newErrors.fullName = "الاسم الكامل مطلوب";
+    if (!name.trim()) {
+      newErrors.name = "الاسم الكامل مطلوب";
     }
 
-    if (!mobile.trim()) {
-      newErrors.mobile = "رقم الجوال مطلوب";
+    if (!mobileNumber.trim()) {
+      newErrors.mobileNumber = "رقم الجوال مطلوب";
     } else {
       // تحقق بسيط لرقم سعودي (تقديري، عدّله حسب الحاجة)
       const saMobileRegex = /^(?:\+?966|0)?5[0-9]{8}$/;
-      if (!saMobileRegex.test(mobile.replace(/\s+/g, ""))) {
-        newErrors.mobile = "الرجاء إدخال رقم جوال صحيح";
+      if (!saMobileRegex.test(mobileNumber.replace(/\s+/g, ""))) {
+        newErrors.mobileNumber = "الرجاء إدخال رقم جوال صحيح";
       }
     }
 
@@ -70,20 +70,19 @@ const RegisterPage: React.FC = () => {
       setIsSubmitting(true);
 
       // غيّر المسار حسب الباك إند عندك لو مختلف
-      await apiClient.post("/user-management/api/register", {
-        fullName,
-        mobile,
-        email,
-        termsAccepted,
+      await apiClient.post("/user-management/auth/request-otp", {
+        name,
+        mobileNumber,
+        email
       });
 
       // بعد نجاح التسجيل (وإرسال OTP من الباك إند) نروح لصفحة OTP
-      navigate("/otp", { state: { email } });
+      navigate("/otp", { state: { name, mobileNumber, email } });
     } catch (err: any) {
       setServerError(
         err?.response?.data?.message ||
-          err.message ||
-          "تعذر إنشاء الحساب، الرجاء المحاولة لاحقاً."
+        err.message ||
+        "تعذر إنشاء الحساب، الرجاء المحاولة لاحقاً."
       );
     } finally {
       setIsSubmitting(false);
@@ -120,20 +119,20 @@ const RegisterPage: React.FC = () => {
           <div>
             <label
               className="block text-sm font-medium text-slate-700 mb-2 text-right"
-              htmlFor="fullName"
+              htmlFor="name"
             >
               الاسم الكامل
             </label>
             <Input
-              id="fullName"
+              id="name"
               type="text"
               placeholder="أدخل اسمك الكامل"
-              value={fullName}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)}
-              className={errors.fullName ? "border-red-500 focus-visible:ring-red-500" : ""}
+              value={name}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+              className={errors.name ? "border-red-500 focus-visible:ring-red-500" : ""}
             />
-            {errors.fullName && (
-              <p className="mt-1 text-xs text-red-500 text-right">{errors.fullName}</p>
+            {errors.name && (
+              <p className="mt-1 text-xs text-red-500 text-right">{errors.name}</p>
             )}
           </div>
 
@@ -149,12 +148,12 @@ const RegisterPage: React.FC = () => {
               id="mobile"
               type="tel"
               placeholder="+966 5XX XXX XXX"
-              value={mobile}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMobile(e.target.value)}
-              className={errors.mobile ? "border-red-500 focus-visible:ring-red-500" : ""}
+              value={mobileNumber}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMobileNumber(e.target.value)}
+              className={errors.mobileNumber ? "border-red-500 focus-visible:ring-red-500" : ""}
             />
-            {errors.mobile && (
-              <p className="mt-1 text-xs text-red-500 text-right">{errors.mobile}</p>
+            {errors.mobileNumber && (
+              <p className="mt-1 text-xs text-red-500 text-right">{errors.mobileNumber}</p>
             )}
           </div>
 

@@ -44,8 +44,7 @@ const LoginPage: React.FC = () => {
       setIsSubmitting(true);
 
       const res = await apiClient.post("/user-management/auth/request-otp", {
-        email,
-        rememberMe,
+        email
       });
 
       // هنا الريسبونس عندك حسب كلامك: "OTP sent to email"

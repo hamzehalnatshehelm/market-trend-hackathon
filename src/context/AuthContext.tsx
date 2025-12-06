@@ -3,7 +3,9 @@ import React, {
   useContext,
   useState,
   ReactNode,
+  useEffect,
 } from "react";
+import { useLocation } from "react-router-dom";
 
 const TOKEN_KEY =
   (import.meta.env.VITE_TOKEN_STORAGE_KEY as string) || "authToken";
@@ -27,59 +29,52 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  // نقرأ من localStorage مرة واحدة فقط عند أول render
-  const [auth, setAuth] = useState<AuthState>(() => {
-    if (typeof window === "undefined") {
-      return { token: null, email: null };
-    }
+  const location = useLocation();
 
+  const [auth, setAuth] = useState<AuthState>(() => {
     try {
       const storedToken = localStorage.getItem(TOKEN_KEY);
       const storedEmail = localStorage.getItem(EMAIL_KEY);
-
-      if (storedToken && storedEmail) {
-        return { token: storedToken, email: storedEmail };
-      }
-
-      return { token: null, email: null };
+      return {
+        token: storedToken,
+        email: storedEmail,
+      };
     } catch {
-      // لو صار خطأ في localStorage (حجب، private mode...) نرجع حالة فاضية
       return { token: null, email: null };
     }
   });
 
   const login = (token: string, email: string) => {
-    try {
-      localStorage.setItem(TOKEN_KEY, token);
-      localStorage.setItem(EMAIL_KEY, email);
-    } catch {
-      // تجاهل أخطاء localStorage بصمت
-    }
-
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(EMAIL_KEY, email);
     setAuth({ token, email });
   };
 
   const logout = () => {
-    try {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(EMAIL_KEY);
-    } catch {
-      // تجاهل أخطاء localStorage
-    }
-
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(EMAIL_KEY);
     setAuth({ token: null, email: null });
   };
 
-  const value: AuthContextValue = {
-    token: auth.token,
-    email: auth.email,
-    isAuthenticated: !!auth.token,
-    login,
-    logout,
-  };
+  // 🟦 تسجيل خروج تلقائي عند الدخول إلى login أو register
+  useEffect(() => {
+    if (location.pathname === "/login" || location.pathname === "/register") {
+      logout();
+    }
+  }, [location.pathname]);
 
   return (
-    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    <AuthContext.Provider
+      value={{
+        token: auth.token,
+        email: auth.email,
+        isAuthenticated: !!auth.token,
+        login,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
 };
 
