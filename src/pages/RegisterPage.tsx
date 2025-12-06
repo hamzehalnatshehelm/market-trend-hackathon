@@ -70,7 +70,7 @@ const RegisterPage: React.FC = () => {
       setIsSubmitting(true);
 
       // غيّر المسار حسب الباك إند عندك لو مختلف
-      await apiClient.post("/user-management/auth/request-otp", {
+      await apiClient.post(`/user-management/auth/request-otp`, {
         name,
         mobileNumber,
         email

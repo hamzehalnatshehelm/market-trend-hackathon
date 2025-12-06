@@ -43,7 +43,7 @@ const LoginPage: React.FC = () => {
     try {
       setIsSubmitting(true);
 
-      const res = await apiClient.post("/user-management/auth/request-otp", {
+      const res = await apiClient.post(`/user-management/auth/request-otp`, {
         email
       });
 

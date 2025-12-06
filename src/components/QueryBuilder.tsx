@@ -68,7 +68,7 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
 
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/market-trends/v1/sections`
+          `/market-trends/v1/sections`
         );
 
         const data = res.data.response as Array<{
@@ -116,7 +116,7 @@ export function QueryBuilder({ onSubmit, initialQuery }: QueryBuilderProps) {
 
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/market-trends/v1/port-types`
+          `/market-trends/v1/port-types`
         );
 
         const raw = res.data?.response as any[];

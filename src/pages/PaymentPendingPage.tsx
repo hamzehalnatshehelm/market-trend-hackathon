@@ -5,11 +5,6 @@ import { useNavigate } from "react-router-dom";
 export default function PaymentPendingPage() {
   const navigate = useNavigate();
 
-  // بيانات تجريبية – غيّرها أو استقبلها من API/route state
-  const planName = "الباقة الاحترافية";
-  const amount = "٥٩٩ ريال / شهر";
-  const transactionId = "#12345678";
-
   const handleRefreshStatus = () => {
     // هنا تقدر تنادي API يفحص حالة الدفع
     // أو بس تعيد تحميل الصفحة مؤقتاً

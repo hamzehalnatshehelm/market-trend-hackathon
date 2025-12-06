@@ -103,7 +103,7 @@ export default function ImportExportDashboard() {
     try {
       const body = buildRequestBody(query);
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/market-trends/v1/market-trends/chart`, {
+      const response = await fetch(`/market-trends/v1/market-trends/chart`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

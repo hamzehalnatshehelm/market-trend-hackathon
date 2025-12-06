@@ -64,7 +64,7 @@ const OtpPage: React.FC = () => {
       setIsSubmitting(true);
 
       // 1️⃣ التحقق من OTP
-      const res = await apiClient.post("/user-management/auth/verify-otp", {
+      const res = await apiClient.post(`/user-management/auth/verify-otp`, {
         email,
         otp
       });
@@ -81,7 +81,7 @@ debugger
       } else {
         // 2️⃣ استدعاء API التسجيل مباشرة بدون توكن
         try {
-          const registerRes = await apiClient.post("/user-management/api/register", {
+          const registerRes = await apiClient.post(`/user-management/api/register`, {
             email,
             name,
             mobileNumber,
@@ -126,7 +126,7 @@ debugger
     setServerError(null);
 
     try {
-      const res = await apiClient.post("/user-management/auth/request-otp", { email });
+      const res = await apiClient.post(`/user-management/auth/request-otp`, { email });
 
       console.log("resend-otp response:", res.data);
 

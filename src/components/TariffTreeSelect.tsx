@@ -60,7 +60,7 @@ export function TariffTreeSelect({ selectedItems, onChange, sector }: TariffTree
 
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/market-trends/v1/chapters/sections/${sectionCode}`
+          `/market-trends/v1/chapters/sections/${sectionCode}`
         );
 
         // أحياناً الريسبونس تكون { response: [...] } وأحياناً array مباشرة

@@ -59,7 +59,17 @@ export default defineConfig({
       //http://10.44.148.143:6061
       // أي request يبدأ بـ /user-management يروح للسيرفر 6061
       '/user-management': {
-        target: 'http://10.41.146.92:6062',
+        target: 'http://10.41.146.92:6061',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/market-trends': {
+        target: 'http://10.41.146.92:6061',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/payment': {
+        target: 'http://10.41.146.92:6060',
         changeOrigin: true,
         secure: false,
       },
